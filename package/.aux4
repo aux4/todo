@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "todo",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Todo list manager for aux4",
   "license": "Apache-2.0",
   "tags": [
@@ -23,7 +23,9 @@
       "commands": [
         {
           "name": "todo",
-          "execute": ["profile:todo"],
+          "execute": [
+            "profile:todo"
+          ],
           "help": {
             "text": "Manage todo lists"
           }
