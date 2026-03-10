@@ -1,0 +1,6 @@
+node_modules/
+package/lib/*.js
+package/lib/node_modules/
+*.zip
+local-test
+.DS_Store

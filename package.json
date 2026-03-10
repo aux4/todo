@@ -1,0 +1,25 @@
+{
+  "name": "@aux4/todo",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "package/lib/aux4-todo.js",
+  "exports": {
+    ".": "./package/lib/aux4-todo.js"
+  },
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^4.27.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/aux4/todo.git"
+  },
+  "license": "Apache-2.0",
+  "description": "Todo list manager for aux4"
+}

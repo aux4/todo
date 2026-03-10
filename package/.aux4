@@ -1,0 +1,203 @@
+{
+  "scope": "aux4",
+  "name": "todo",
+  "version": "0.0.1",
+  "description": "Todo list manager for aux4",
+  "license": "Apache-2.0",
+  "tags": [
+    "todo",
+    "task",
+    "list",
+    "json"
+  ],
+  "system": [
+    [
+      "test:node --version",
+      "brew:node",
+      "linux:nodejs"
+    ]
+  ],
+  "profiles": [
+    {
+      "name": "main",
+      "commands": [
+        {
+          "name": "todo",
+          "execute": ["profile:todo"],
+          "help": {
+            "text": "Manage todo lists"
+          }
+        }
+      ]
+    },
+    {
+      "name": "todo",
+      "commands": [
+        {
+          "name": "list",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js list values(file)"
+          ],
+          "help": {
+            "text": "List all todo lists with progress",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              }
+            ]
+          }
+        },
+        {
+          "name": "view",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js view values(file, name)"
+          ],
+          "help": {
+            "text": "View a specific todo list with all items",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              }
+            ]
+          }
+        },
+        {
+          "name": "new",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js add values(file, name, item)"
+          ],
+          "help": {
+            "text": "Create a new todo list with optional initial item",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "item",
+                "text": "Initial todo item (optional)",
+                "default": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "add",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js addItem values(file, name, item)"
+          ],
+          "help": {
+            "text": "Add a new item to an existing todo list",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "item",
+                "text": "Item text (multiple words supported)"
+              }
+            ]
+          }
+        },
+        {
+          "name": "remove",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js removeItem values(file, name, index)"
+          ],
+          "help": {
+            "text": "Remove an item from a todo list",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "index",
+                "text": "Item index (0-based, required)"
+              }
+            ]
+          }
+        },
+        {
+          "name": "complete",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js complete values(file, name, index, status)"
+          ],
+          "help": {
+            "text": "Mark todo item as complete or incomplete",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "index",
+                "text": "Item index (0-based, required)"
+              },
+              {
+                "name": "status",
+                "text": "Completion status",
+                "default": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "delete",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js remove values(file, name)"
+          ],
+          "help": {
+            "text": "Delete an entire todo list",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
