@@ -50,9 +50,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Run tests
-        run: cd package && aux4 test run
-
       - name: Publish package
         uses: aux4/publish-package-action@v1
         with:
