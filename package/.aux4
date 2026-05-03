@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "todo",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Todo list manager for aux4",
   "license": "Apache-2.0",
   "tags": [
