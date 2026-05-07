@@ -1,31 +1,11 @@
-# @aux4/todo
+# aux4/todo
 
-A todo list manager for aux4 that stores todo lists in `.todo.json` files.
+Todo list manager for aux4. Create and manage multiple todo lists stored in `.todo.json` files. Mark items as completed or pending, list all todos with progress counters, and view specific lists with strikethrough formatting for completed items.
 
-## Features
+## Installation
 
-- Create and manage multiple todo lists in JSON format
-- Mark items as completed or pending
-- List all todos with progress counters
-- View specific todos with strikethrough formatting for completed items
-- Add, remove, and complete items in todo lists
-
-## File Format
-
-Todo files use JSON with list names as object keys:
-
-```json
-{
-  "Work Tasks": [
-    { "text": "Review pull request", "completed": false },
-    { "text": "Update documentation", "completed": true },
-    { "text": "Fix bug in login", "completed": false }
-  ],
-  "Personal": [
-    { "text": "Buy groceries", "completed": true },
-    { "text": "Call dentist", "completed": false }
-  ]
-}
+```bash
+aux4 aux4 pkger install aux4/todo
 ```
 
 ## Commands
@@ -65,23 +45,6 @@ aux4 todo complete "Work Tasks" --index 0
 aux4 todo delete "Work Tasks"
 ```
 
-## Programmatic Usage
+## Storage
 
-You can also use the todo manager programmatically:
-
-```javascript
-import { listTodos, viewTodo, addTodo } from '@aux4/todo';
-
-// List all todos
-const todos = await listTodos('.todo.json');
-
-// View specific todo
-const workTasks = await viewTodo('Work Tasks', '.todo.json');
-
-// Create new todo
-await addTodo('Shopping', ['Milk', 'Bread', 'Eggs'], '.todo.json');
-```
-
-## File Location
-
-By default, todos are stored in `.todo.json` in the current directory. You can specify a different file path with the `--file` flag.
+By default, todos are stored in `.todo.json` in the current directory. Use the `--file` flag on any command to specify a different file path.
