@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "todo",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "description": "Todo list manager for aux4",
   "license": "Apache-2.0",
   "tags": [
@@ -75,10 +75,10 @@
         {
           "name": "new",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js add values(file, name, item)"
+            "node ${packageDir}/lib/aux4-todo.js add values(file, name, prefix, item, assignee, description)"
           ],
           "help": {
-            "text": "Create a new todo list with optional initial item",
+            "text": "Create a new todo list with a prefix and optional initial item",
             "variables": [
               {
                 "name": "file",
@@ -91,8 +91,22 @@
                 "arg": true
               },
               {
+                "name": "prefix",
+                "text": "Task ID prefix (2-10 uppercase letters, e.g. SPR, SEO)"
+              },
+              {
                 "name": "item",
                 "text": "Initial todo item (optional)",
+                "default": ""
+              },
+              {
+                "name": "assignee",
+                "text": "Assignee name (optional)",
+                "default": ""
+              },
+              {
+                "name": "description",
+                "text": "Long description (optional)",
                 "default": ""
               }
             ]
@@ -101,7 +115,7 @@
         {
           "name": "add",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js addItem values(file, name, item)"
+            "node ${packageDir}/lib/aux4-todo.js addItem values(file, name, item, assignee, description)"
           ],
           "help": {
             "text": "Add a new item to an existing todo list",
@@ -119,6 +133,16 @@
               {
                 "name": "item",
                 "text": "Item text (multiple words supported)"
+              },
+              {
+                "name": "assignee",
+                "text": "Assignee name (optional)",
+                "default": ""
+              },
+              {
+                "name": "description",
+                "text": "Long description (optional)",
+                "default": ""
               }
             ]
           }
@@ -126,7 +150,7 @@
         {
           "name": "remove",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js removeItem values(file, name, index)"
+            "node ${packageDir}/lib/aux4-todo.js removeItem values(file, name, id)"
           ],
           "help": {
             "text": "Remove an item from a todo list",
@@ -142,8 +166,8 @@
                 "arg": true
               },
               {
-                "name": "index",
-                "text": "Item index (0-based, required)"
+                "name": "id",
+                "text": "Item id (required)"
               }
             ]
           }
@@ -151,7 +175,7 @@
         {
           "name": "complete",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js complete values(file, name, index, status)"
+            "node ${packageDir}/lib/aux4-todo.js complete values(file, name, id, status)"
           ],
           "help": {
             "text": "Mark todo item as complete or incomplete",
@@ -167,13 +191,223 @@
                 "arg": true
               },
               {
-                "name": "index",
-                "text": "Item index (0-based, required)"
+                "name": "id",
+                "text": "Item id (required)"
               },
               {
                 "name": "status",
                 "text": "Completion status",
                 "default": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "subtask",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js subtask values(file, name, id, item, assignee, description)"
+          ],
+          "help": {
+            "text": "Add a subtask to a todo item",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Parent item id (required)"
+              },
+              {
+                "name": "item",
+                "text": "Subtask text"
+              },
+              {
+                "name": "assignee",
+                "text": "Assignee name (optional)",
+                "default": ""
+              },
+              {
+                "name": "description",
+                "text": "Long description (optional)",
+                "default": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "subtasks",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js subtasks values(file, name, id)"
+          ],
+          "help": {
+            "text": "View subtasks of a todo item",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Parent item id (required)"
+              }
+            ]
+          }
+        },
+        {
+          "name": "describe",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js describe values(file, name, id, description)"
+          ],
+          "help": {
+            "text": "Set or update the description of a todo item",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Item id (required)"
+              },
+              {
+                "name": "description",
+                "text": "Long description text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "assign",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js assign values(file, name, id, assignee)"
+          ],
+          "help": {
+            "text": "Assign a todo item to someone",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Item id (required)"
+              },
+              {
+                "name": "assignee",
+                "text": "Assignee name (empty to unassign)",
+                "default": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "comment",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js comment values(file, name, id, author, message)"
+          ],
+          "help": {
+            "text": "Add a comment to a todo item",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Item id (required)"
+              },
+              {
+                "name": "author",
+                "text": "Comment author name"
+              },
+              {
+                "name": "message",
+                "text": "Comment text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "comments",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js comments values(file, name, id)"
+          ],
+          "help": {
+            "text": "View comments on a todo item",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Item id (required)"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reference",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js reference values(file, name, prefix, target)"
+          ],
+          "help": {
+            "text": "Add a cross-file reference to resolve foreign task prefixes",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "prefix",
+                "text": "Foreign prefix to reference (e.g. SEO)"
+              },
+              {
+                "name": "target",
+                "text": "Target file and list (e.g. ../seo/.todo.json#seo-tasks)"
               }
             ]
           }

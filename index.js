@@ -2,240 +2,179 @@ import { TodoManager } from './lib/TodoManager.js';
 import { TodoUtils } from './lib/TodoUtils.js';
 import { TodoParser } from './lib/TodoParser.js';
 
-// Export library functions for programmatic use
 export { TodoManager, TodoUtils, TodoParser };
 
-// Main todo management functions
-export async function listTodos(filePath = '.todo.json') {
-  const manager = new TodoManager(filePath);
-  return await manager.list();
-}
+// --- CLI ---
 
-export async function viewTodo(name, filePath = '.todo.json') {
-  const manager = new TodoManager(filePath);
-  return await manager.view(name);
-}
+const COMMANDS = {
+  list:       todoList,
+  view:       todoView,
+  add:        todoNew,
+  addItem:    todoAddItem,
+  complete:   todoComplete,
+  assign:     todoAssign,
+  describe:   todoDescribe,
+  comment:    todoComment,
+  comments:   todoComments,
+  subtask:    todoSubtask,
+  subtasks:   todoSubtasks,
+  reference:  todoReference,
+  remove:     todoRemove,
+  removeItem: todoRemoveItem,
+};
 
-export async function addTodo(name, items = [], filePath = '.todo.json') {
-  const manager = new TodoManager(filePath);
-  return await manager.add(name, items);
-}
-
-export async function addTodoItem(name, item, filePath = '.todo.json') {
-  const manager = new TodoManager(filePath);
-  return await manager.addItem(name, item);
-}
-
-export async function toggleTodoItem(name, itemIndex, filePath = '.todo.json') {
-  const manager = new TodoManager(filePath);
-  return await manager.toggle(name, itemIndex);
-}
-
-export async function removeTodo(name, filePath = '.todo.json') {
-  const manager = new TodoManager(filePath);
-  return await manager.remove(name);
-}
-
-export async function removeTodoItem(name, itemIndex, filePath = '.todo.json') {
-  const manager = new TodoManager(filePath);
-  return await manager.removeItem(name, itemIndex);
-}
-
-// CLI handling
 (async () => {
   const args = process.argv.slice(2);
-  if (args.length === 0) {
-    console.error('No command provided');
-    process.exit(1);
-  }
+  if (args.length === 0) { console.error('No command provided'); process.exit(1); }
 
-  const action = args[0];
-  const actionArgs = args.slice(1);
+  const handler = COMMANDS[args[0]];
+  if (!handler) { console.error(`Unknown action: ${args[0]}`); process.exit(1); }
 
   try {
-    if (action === 'list') {
-      await todoList(actionArgs);
-    } else if (action === 'view') {
-      await todoView(actionArgs);
-    } else if (action === 'add') {
-      await todoNew(actionArgs); // CLI action 'add' (from .aux4 'new' command) creates new todos
-    } else if (action === 'addItem') {
-      await todoAddItem(actionArgs); // CLI action 'addItem' (from .aux4 'add' command) adds items to existing todos
-    } else if (action === 'complete') {
-      await todoComplete(actionArgs); // CLI action 'complete' (from .aux4 'complete' command) replaces 'toggle'
-    } else if (action === 'remove') {
-      await todoRemove(actionArgs);
-    } else if (action === 'removeItem') {
-      await todoRemoveItem(actionArgs);
-    } else {
-      console.error(`Unknown action: ${action}`);
-      process.exit(1);
-    }
+    await handler(args.slice(1));
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
     process.exit(1);
   }
 })();
 
-async function todoList(args) {
-  const filePath = args.length > 0 ? args[0] : '.todo.json';
-  const todos = await listTodos(filePath);
+// --- Helpers ---
 
-  if (todos.length === 0) {
-    console.log('No todos found.');
-    return;
-  }
+function arg(args, i) { return args[i] || ''; }
+
+function requireArgs(args, min, message) {
+  if (args.length < min) throw new Error(message);
+}
+
+function mgr(args) { return new TodoManager(arg(args, 0) || '.todo.json'); }
+
+// --- Command handlers ---
+
+async function todoList(args) {
+  const todos = await mgr(args).list();
+  if (todos.length === 0) { console.log('No todos found.'); return; }
 
   console.log('Todo Lists:');
-  for (const todo of todos) {
-    const progress = todo.total > 0 ? `(${todo.completed}/${todo.total})` : '(empty)';
-    console.log(`  ${todo.name} ${progress}`);
+  for (const t of todos) {
+    const progress = t.total > 0 ? `(${t.completed}/${t.total})` : '(empty)';
+    console.log(`  [${t.prefix}] ${t.name} ${progress}`);
   }
 }
 
 async function todoView(args) {
-  const filePath = args.length > 0 ? args[0] : '.todo.json';
+  requireArgs(args, 2, 'Todo name is required');
+  const todo = await mgr(args).view(arg(args, 1));
 
-  if (args.length < 2) {
-    console.error('Todo name is required');
-    process.exit(1);
-  }
+  console.log(`## ${todo.title} [${todo.prefix}]`);
+  if (todo.items.length === 0) { console.log('  (no items)'); return; }
 
-  const name = args[1];
-
-  const todo = await viewTodo(name, filePath);
-
-  console.log(`## ${todo.title}`);
-  if (todo.items.length === 0) {
-    console.log('  (no items)');
-    return;
-  }
-
-  const formattedItems = TodoUtils.formatItems(todo.items);
-  for (const item of formattedItems) {
-    console.log(`  ${item}`);
-  }
+  for (const line of TodoUtils.formatItems(todo.items)) console.log(`  ${line}`);
 }
 
 async function todoNew(args) {
-  const filePath = args.length > 0 ? args[0] : '.todo.json';
+  requireArgs(args, 3, 'Todo name and prefix are required');
+  const name = arg(args, 1);
+  const prefix = arg(args, 2);
+  const item = arg(args, 3);
+  const assignee = arg(args, 4);
+  const description = arg(args, 5);
 
-  if (args.length < 2) {
-    console.error('Todo name is required');
-    process.exit(1);
-  }
-
-  const name = args[1];
-  let items = [];
-
-  // Handle optional initial item
-  if (args.length > 2) {
-    const item = args[2];
-    if (item && item.trim()) {
-      items = [item];
-    }
-  }
-
-  await addTodo(name, items, filePath);
-  console.log(`Todo '${name}' created.`);
+  const items = item && item.trim() ? [item] : [];
+  await mgr(args).add(name, prefix, items, { assignee, description });
+  console.log(`Todo '${name}' [${prefix}] created.`);
 }
 
 async function todoAddItem(args) {
-  const filePath = args.length > 0 ? args[0] : '.todo.json';
+  requireArgs(args, 3, 'Todo name and item text are required');
+  const name = arg(args, 1);
+  const item = arg(args, 2);
+  if (!item.trim()) throw new Error('Item text cannot be empty');
 
-  if (args.length < 3) {
-    console.error('Todo name and item text are required');
-    process.exit(1);
-  }
-
-  const name = args[1];
-  const itemText = args[2] || '';
-
-  if (!itemText.trim()) {
-    console.error('Item text cannot be empty');
-    process.exit(1);
-  }
-
-  await addTodoItem(name, itemText, filePath);
-  console.log(`Item added to '${name}'.`);
+  const result = await mgr(args).addItem(name, item, { assignee: arg(args, 3), description: arg(args, 4) });
+  console.log(`${result.id} added to '${name}'.`);
 }
 
 async function todoComplete(args) {
-  const filePath = args.length > 0 ? args[0] : '.todo.json';
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const [, name, id, status] = [arg(args, 0), arg(args, 1), arg(args, 2), arg(args, 3)];
+  const m = mgr(args);
 
-  if (args.length < 3) {
-    console.error('Todo name and item index are required');
-    process.exit(1);
-  }
-
-  const name = args[1];
-  const itemIndex = parseInt(args[2], 10);
-
-  if (isNaN(itemIndex)) {
-    console.error('Item index must be a number');
-    process.exit(1);
-  }
-
-  // Get current state to determine behavior
-  const currentTodo = await viewTodo(name, filePath);
-  const currentItem = currentTodo.items[itemIndex];
-
-  if (!currentItem) {
-    console.error(`Item ${itemIndex} not found in '${name}'`);
-    process.exit(1);
-  }
-
-  let targetStatus;
-  let shouldToggle = false;
-
-  if (args.length > 3 && args[3] !== '') {
-    // Explicit status provided
-    targetStatus = args[3] === 'true';
-    shouldToggle = currentItem.completed !== targetStatus;
+  if (status !== '') {
+    const targetStatus = status === 'true';
+    const todos = await m._load();
+    const item = m._requireItem(todos, name, id);
+    if (item.completed !== targetStatus) await m.toggle(name, id);
+    console.log(`${id} in '${name}' marked as ${targetStatus ? 'completed' : 'pending'}.`);
   } else {
-    // No status provided - toggle current state
-    targetStatus = !currentItem.completed;
-    shouldToggle = true;
+    const nowCompleted = await m.toggle(name, id);
+    console.log(`${id} in '${name}' marked as ${nowCompleted ? 'completed' : 'pending'}.`);
   }
+}
 
-  if (shouldToggle) {
-    await toggleTodoItem(name, itemIndex, filePath);
-  }
+async function todoAssign(args) {
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const [name, id, assignee] = [arg(args, 1), arg(args, 2), arg(args, 3)];
+  await mgr(args).assign(name, id, assignee);
+  console.log(assignee
+    ? `${id} in '${name}' assigned to ${assignee}.`
+    : `${id} in '${name}' unassigned.`);
+}
 
-  const statusText = targetStatus ? 'completed' : 'pending';
-  console.log(`Item ${itemIndex} in '${name}' marked as ${statusText}.`);
+async function todoDescribe(args) {
+  requireArgs(args, 4, 'Todo name, item id, and description are required');
+  const [name, id, desc] = [arg(args, 1), arg(args, 2), arg(args, 3)];
+  await mgr(args).describe(name, id, desc);
+  console.log(`${id} in '${name}' description updated.`);
+}
+
+async function todoComment(args) {
+  requireArgs(args, 5, 'Todo name, item id, author, and message are required');
+  const [name, id, author, message] = [arg(args, 1), arg(args, 2), arg(args, 3), arg(args, 4)];
+  await mgr(args).comment(name, id, author, message);
+  console.log(`Comment added to ${id} in '${name}'.`);
+}
+
+async function todoComments(args) {
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const result = await mgr(args).viewComments(arg(args, 1), arg(args, 2));
+  console.log(`## ${result.title}`);
+  for (const line of TodoUtils.formatComments(result.comments)) console.log(line);
+}
+
+async function todoSubtask(args) {
+  requireArgs(args, 4, 'Todo name, item id, and subtask text are required');
+  const [name, id, item, assignee, desc] = [arg(args, 1), arg(args, 2), arg(args, 3), arg(args, 4), arg(args, 5)];
+  const result = await mgr(args).addSubtask(name, id, item, { assignee, description: desc });
+  console.log(`${result.id} added as subtask of ${id} in '${name}'.`);
+}
+
+async function todoSubtasks(args) {
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const result = await mgr(args).viewSubtasks(arg(args, 1), arg(args, 2));
+  console.log(`## ${result.title}`);
+  if (result.items.length === 0) { console.log('  (no subtasks)'); return; }
+  for (const line of TodoUtils.formatItems(result.items)) console.log(`  ${line}`);
+}
+
+async function todoReference(args) {
+  requireArgs(args, 4, 'Todo name, prefix, and target are required');
+  const [name, prefix, target] = [arg(args, 1), arg(args, 2), arg(args, 3)];
+
+  if (!/^[A-Z]{2,10}$/.test(prefix)) throw new Error(`Prefix must be 2-10 uppercase letters. Got: '${prefix}'.`);
+
+  await mgr(args).addReference(name, prefix, target);
+  console.log(`Reference ${prefix} -> ${target} added to '${name}'.`);
 }
 
 async function todoRemove(args) {
-  const filePath = args.length > 0 ? args[0] : '.todo.json';
-
-  if (args.length < 2) {
-    console.error('Todo name is required');
-    process.exit(1);
-  }
-
-  const name = args[1];
-
-  await removeTodo(name, filePath);
-  console.log(`Todo '${name}' removed.`);
+  requireArgs(args, 2, 'Todo name is required');
+  await mgr(args).remove(arg(args, 1));
+  console.log(`Todo '${arg(args, 1)}' removed.`);
 }
 
 async function todoRemoveItem(args) {
-  const filePath = args.length > 0 ? args[0] : '.todo.json';
-
-  if (args.length < 3) {
-    console.error('Todo name and item index are required');
-    process.exit(1);
-  }
-
-  const name = args[1];
-  const itemIndex = parseInt(args[2], 10);
-
-  if (isNaN(itemIndex)) {
-    console.error('Item index must be a number');
-    process.exit(1);
-  }
-
-  await removeTodoItem(name, itemIndex, filePath);
-  console.log(`Item ${itemIndex} removed from '${name}'.`);
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const [name, id] = [arg(args, 1), arg(args, 2)];
+  await mgr(args).removeItem(name, id);
+  console.log(`${id} removed from '${name}'.`);
 }

@@ -1,6 +1,6 @@
 # todo list
 
-List all todo lists with progress.
+List all todo lists with their prefix and progress. Subtask items are excluded from counts.
 
 ## Usage
 
@@ -20,8 +20,8 @@ aux4 todo list [--file <path>]
 aux4 todo list
 ```
 
-```
+```text
 Todo Lists:
-  Work (1/3)
-  Personal (0/2)
+  [SPR] sprint-1 (1/3)
+  [BKL] backlog (0/5)
 ```

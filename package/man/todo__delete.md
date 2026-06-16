@@ -1,6 +1,6 @@
 # todo delete
 
-Delete an entire todo list.
+Delete an entire todo list including all its items and subtasks.
 
 ## Usage
 
@@ -18,9 +18,9 @@ aux4 todo delete <name> [--file <path>]
 ## Example
 
 ```bash
-aux4 todo delete "Work"
+aux4 todo delete "sprint-1"
 ```
 
-```
-Todo 'Work' removed.
+```text
+Todo 'sprint-1' removed.
 ```

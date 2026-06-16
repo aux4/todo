@@ -1,129 +1,125 @@
-# Todo Item Management Tests
+# Todo Item Management
 
-Tests for managing items within todo lists.
-
-```beforeAll
-rm -f .todo.json
+```beforeEach
+rm -f .todo.json .todo.json.lock
 ```
 
 ```afterAll
-rm -f .todo.json
+rm -f .todo.json .todo.json.lock
 ```
 
-## Test 1: Add items to existing todo
+## complete
 
-### should setup todo and add item
+### should mark item as completed
 
 ```execute
-aux4 todo new "Project" --item "Setup repo"; aux4 todo add "Project" --item "Write tests"
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo complete sprint --id SPR-001
 ```
 
-```expect
-Todo 'Project' created.
-Item added to 'Project'.
+```expect:partial
+**
+SPR-001 in 'sprint' marked as completed.
 ```
 
-### should verify items were added
+### should show strikethrough on completed item
 
 ```execute
-aux4 todo view "Project"
-```
-
-```expect
-## Project
-  0: [ ] Setup repo
-  1: [ ] Write tests
-```
-
-## Test 2: Toggle item completion
-
-### should mark first item as completed
-
-```execute
-aux4 todo complete "Project" --index 0
-```
-
-```expect
-Item 0 in 'Project' marked as completed.
-```
-
-### should show strikethrough formatting
-
-```execute
-aux4 todo view "Project"
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo complete sprint --id SPR-001 && aux4 todo view sprint
 ```
 
 ```expect:regex
-## Project
-  0: \[x\] .*̶.*
-  1: \[ \] Write tests
+.*
+.*
+## sprint \[SPR\]
+  SPR-001: \[x\] .*̶.*
+```
+
+### should toggle back to pending
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo complete sprint --id SPR-001 && aux4 todo complete sprint --id SPR-001
+```
+
+```expect:partial
+**
+SPR-001 in 'sprint' marked as completed.
+SPR-001 in 'sprint' marked as pending.
 ```
 
 ### should update progress counter
 
 ```execute
-aux4 todo list
+aux4 todo new sprint --prefix SPR --item "A" && aux4 todo add sprint --item "B" && aux4 todo complete sprint --id SPR-001 && aux4 todo list
 ```
 
-```expect
+```expect:partial
+**
 Todo Lists:
-  Project (1/2)
+  [SPR] sprint (1/2)
 ```
 
-## Test 3: Toggle item back to pending
-
-### should mark completed item as pending
+### should set explicit status
 
 ```execute
-aux4 todo complete "Project" --index 0
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo complete sprint --id SPR-001 --status true
 ```
 
-```expect
-Item 0 in 'Project' marked as pending.
+```expect:partial
+**
+SPR-001 in 'sprint' marked as completed.
 ```
 
-### should verify no strikethrough
+## remove
+
+### should remove an item by id
 
 ```execute
-aux4 todo view "Project"
+aux4 todo new sprint --prefix SPR --item "A" && aux4 todo add sprint --item "B" && aux4 todo remove sprint --id SPR-001 && aux4 todo view sprint
 ```
 
-```expect
-## Project
-  0: [ ] Setup repo
-  1: [ ] Write tests
+```expect:partial
+**
+## sprint [SPR]
+  SPR-002: [ ] B
 ```
 
-## Test 4: Remove specific item
+## assign
 
-### should remove second item
+### should assign an item
 
 ```execute
-aux4 todo remove "Project" --index 1
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo assign sprint --id SPR-001 --assignee "Alice" && aux4 todo view sprint
 ```
 
-```expect
-Item 1 removed from 'Project'.
+```expect:partial
+**
+## sprint [SPR]
+  SPR-001: [ ] Task @Alice
 ```
 
-### should verify item was removed
+### should unassign an item
 
 ```execute
-aux4 todo view "Project"
+aux4 todo new sprint --prefix SPR --item "Task" --assignee "Alice" && aux4 todo assign sprint --id SPR-001 && aux4 todo view sprint
 ```
 
-```expect
-## Project
-  0: [ ] Setup repo
+```expect:partial
+**
+## sprint [SPR]
+  SPR-001: [ ] Task
 ```
 
-### should show updated progress counter
+## describe
+
+### should set description
 
 ```execute
-aux4 todo list
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo describe sprint --id SPR-001 --description "Details" && aux4 todo view sprint
 ```
 
-```expect
-Todo Lists:
-  Project (0/1)
+```expect:partial
+**
+## sprint [SPR]
+  SPR-001: [ ] Task
+              Details
 ```
