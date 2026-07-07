@@ -203,6 +203,40 @@
           }
         },
         {
+          "name": "move",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js move values(file, name, id, status)"
+          ],
+          "help": {
+            "text": "Move a todo item to a status (open, doing, done)",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Item id (required)"
+              },
+              {
+                "name": "status",
+                "text": "Target status",
+                "options": [
+                  "open",
+                  "doing",
+                  "done"
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "subtask",
           "execute": [
             "node ${packageDir}/lib/aux4-todo.js subtask values(file, name, id, item, assignee, description)"

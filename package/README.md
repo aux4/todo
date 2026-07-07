@@ -1,6 +1,6 @@
 # aux4/todo
 
-Todo list manager for aux4. Create and manage multiple todo lists stored in `.todo.json` files using Jira-style prefixed task IDs (`SPR-001`, `SEO-002`). Each item supports an assignee, a long description, subtasks, timestamped comments, and cross-file references to tasks in other todo files. List all todos with progress counters and view a specific list with strikethrough formatting for completed items.
+Todo list manager for aux4. Create and manage multiple todo lists stored in `.todo.json` files using Jira-style prefixed task IDs (`SPR-001`, `SEO-002`). Each item has a status (`open`, `doing`, `done`) and supports an assignee, a long description, subtasks, timestamped comments, and cross-file references to tasks in other todo files. List all todos with progress counters and view a specific list with strikethrough formatting for completed items.
 
 ## Installation
 
@@ -24,6 +24,7 @@ Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto
       "SPR-001": {
         "text": "Import products",
         "completed": false,
+        "status": "doing",
         "order": 0,
         "assignee": "Alex",
         "description": "Import the next 5 IKEA products",
@@ -40,6 +41,7 @@ Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto
         "type": "subtask",
         "parent": "SPR-001",
         "completed": false,
+        "status": "open",
         "order": 1
       }
     }
@@ -48,6 +50,18 @@ Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto
 ```
 
 By default todos are stored in `.todo.json` in the current directory. Use the `--file` flag on any command to target a different file path.
+
+### Task status
+
+Every task and subtask has a `status` field with three values:
+
+- `open` — not started (the default for new items)
+- `doing` — in progress
+- `done` — completed
+
+`status` and the `completed` flag are always kept in sync: `done` corresponds to `completed: true`, while `open` and `doing` correspond to `completed: false`. Use `aux4 todo move` to change status, or `aux4 todo complete` as a shortcut for the `open` ⇄ `done` transition.
+
+**Backward compatibility:** items written before the `status` field existed keep working unchanged. When an item has no `status`, it is derived from `completed` (`true` → `done`, `false` → `open`). No file migration is required — only items you move gain a stored `status` field.
 
 ## Commands
 
@@ -59,6 +73,7 @@ By default todos are stored in `.todo.json` in the current directory. Use the `-
 | `add` | Add an item to an existing todo list |
 | `remove` | Remove an item from a todo list |
 | `complete` | Mark a todo item as complete or incomplete |
+| `move` | Move a todo item to a status (open, doing, done) |
 | `delete` | Delete an entire todo list |
 | `assign` | Assign a todo item to someone |
 | `describe` | Set or update the description of a todo item |
@@ -104,11 +119,20 @@ aux4 todo remove "sprint-1" --id SPR-001
 
 ### Mark an item complete or incomplete
 
-Without `--status`, the command toggles the item. Pass `--status true` or `--status false` to set it explicitly.
+Without `--status`, the command toggles the item. Pass `--status true` or `--status false` to set it explicitly. `complete` is a shortcut for `move`: `--status true` moves the item to `done`, `--status false` moves it to `open`.
 
 ```bash
 aux4 todo complete "sprint-1" --id SPR-001
 aux4 todo complete "sprint-1" --id SPR-001 --status true
+```
+
+### Move an item to a status
+
+Move a task or subtask to `open`, `doing`, or `done`. Moving to `done` sets `completed` to `true`; moving to `open` or `doing` sets it to `false`.
+
+```bash
+aux4 todo move "sprint-1" --id SPR-001 --status doing
+aux4 todo move "sprint-1" --id SPR-001 --status done
 ```
 
 ### Delete an entire list

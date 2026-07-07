@@ -12,6 +12,7 @@ const COMMANDS = {
   add:        todoNew,
   addItem:    todoAddItem,
   complete:   todoComplete,
+  move:       todoMove,
   assign:     todoAssign,
   describe:   todoDescribe,
   comment:    todoComment,
@@ -101,14 +102,19 @@ async function todoComplete(args) {
 
   if (status !== '') {
     const targetStatus = status === 'true';
-    const todos = await m._load();
-    const item = m._requireItem(todos, name, id);
-    if (item.completed !== targetStatus) await m.toggle(name, id);
+    await m.move(name, id, targetStatus ? 'done' : 'open');
     console.log(`${id} in '${name}' marked as ${targetStatus ? 'completed' : 'pending'}.`);
   } else {
     const nowCompleted = await m.toggle(name, id);
     console.log(`${id} in '${name}' marked as ${nowCompleted ? 'completed' : 'pending'}.`);
   }
+}
+
+async function todoMove(args) {
+  requireArgs(args, 4, 'Todo name, item id, and status are required');
+  const [name, id, status] = [arg(args, 1), arg(args, 2), arg(args, 3)];
+  const result = await mgr(args).move(name, id, status);
+  console.log(`${id} in '${name}' moved to ${result.status}.`);
 }
 
 async function todoAssign(args) {
