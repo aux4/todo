@@ -60,7 +60,7 @@ By default todos are stored in `.todo.json` in the current directory. Use the `-
 
 ### Automatic migration
 
-Older `.todo.json` files that predate the `order`/`archived` arrays (items carried a numeric `order` field instead) are upgraded transparently on the first command that touches the file. The `order` array is rebuilt from the legacy numeric field, any item marked `archived: true` is moved into the `archived` array, the redundant per-item `order` field is dropped, and the file is saved back in the new shape. No manual migration is required.
+Older `.todo.json` files that predate the `order`/`archived` arrays (items carried a numeric `order` field instead) are upgraded transparently on the first command that **writes** to the file (any `add`, `move`, `complete`, `comment`, `archive`, etc.). The `order` array is rebuilt from the legacy numeric field, any item marked `archived: true` is moved into the `archived` array, the redundant per-item `order` field is dropped, and the file is saved back in the new shape. Read-only commands (`view`, `list`, `show`, `comments`) apply the same upgrade in memory for correct output but do not rewrite the file, so a read never contends with a concurrent write. No manual migration is required.
 
 ### Task status
 

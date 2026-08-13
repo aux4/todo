@@ -85,15 +85,69 @@ Invalid status 'blocked'. Must be one of: open, doing, done, all.
 ```
 
 ```execute
-aux4 todo view legacy && cat .todo.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('order:', d.legacy.order.join(',')); console.log('archived:', d.legacy.archived.join(',')); console.log('hasNumericOrder:', 'order' in d.legacy.tasks['LEG-001']); console.log('hasArchivedFlag:', 'archived' in d.legacy.tasks['LEG-003']);"
+aux4 todo add legacy --item "Fourth" && cat .todo.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('order:', d.legacy.order.join(',')); console.log('archived:', d.legacy.archived.join(',')); console.log('hasNumericOrder:', 'order' in d.legacy.tasks['LEG-001']); console.log('hasArchivedFlag:', 'archived' in d.legacy.tasks['LEG-003']);"
+```
+
+```expect:partial
+LEG-004 added to 'legacy'.
+order: LEG-001,LEG-002,LEG-004
+archived: LEG-003
+hasNumericOrder: false
+hasArchivedFlag: false
+```
+
+### should NOT rewrite a legacy file on a pure read
+
+```file:.todo.json
+{
+  "legacy": {
+    "prefix": "LEG",
+    "counter": 2,
+    "tasks": {
+      "LEG-001": { "text": "First", "completed": false, "status": "open", "order": 0 },
+      "LEG-002": { "text": "Second", "completed": false, "status": "open", "order": 1 }
+    }
+  }
+}
+```
+
+```execute
+aux4 todo view legacy && aux4 todo list && cat .todo.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('stillLegacy_hasNumericOrder:', 'order' in d.legacy.tasks['LEG-001']); console.log('hasOrderArray:', Array.isArray(d.legacy.order)); console.log('hasArchivedArray:', Array.isArray(d.legacy.archived));"
 ```
 
 ```expect:partial
 ## legacy [LEG]
   LEG-001: [ ] First
   LEG-002: [ ] Second
-order: LEG-001,LEG-002
-archived: LEG-003
+**
+stillLegacy_hasNumericOrder: true
+hasOrderArray: false
+hasArchivedArray: false
+```
+
+### should migrate the file only after a write
+
+```file:.todo.json
+{
+  "legacy": {
+    "prefix": "LEG",
+    "counter": 2,
+    "tasks": {
+      "LEG-001": { "text": "First", "completed": false, "status": "open", "order": 0 },
+      "LEG-002": { "text": "Second", "completed": false, "status": "open", "order": 1 }
+    }
+  }
+}
+```
+
+```execute
+aux4 todo view legacy && aux4 todo move legacy --id LEG-002 --status doing && cat .todo.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('hasNumericOrder:', 'order' in d.legacy.tasks['LEG-001']); console.log('order:', d.legacy.order.join(',')); console.log('archived:', JSON.stringify(d.legacy.archived));"
+```
+
+```expect:partial
+**
+LEG-002 in 'legacy' moved to doing.
 hasNumericOrder: false
-hasArchivedFlag: false
+order: LEG-001,LEG-002
+archived: []
 ```

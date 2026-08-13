@@ -16,4 +16,4 @@ Agent-efficiency read model. This release cuts the context cost of reading a tod
 ## Storage
 
 - Per-list shape is now `{ prefix, counter, tasks, order, archived, references? }`. `order` holds active top-level IDs in display order; `archived` holds archived top-level IDs. The per-item numeric `order` field is gone.
-- **Automatic migration:** old-shape files upgrade themselves transparently on the first command — `order` is rebuilt from the legacy numeric field, legacy `archived: true` items move into the `archived` array, the redundant numeric field is dropped, and the file is saved back. No manual migration required.
+- **Automatic migration:** old-shape files upgrade themselves transparently on the first command that **writes** to the file — `order` is rebuilt from the legacy numeric field, legacy `archived: true` items move into the `archived` array, the redundant numeric field is dropped, and the file is saved back. Read-only commands apply the same upgrade in memory for correct output but never rewrite the file, so reads cannot clobber a concurrent write. No manual migration required.
