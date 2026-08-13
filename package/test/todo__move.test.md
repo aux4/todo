@@ -48,7 +48,7 @@ completed: false
 ```
 
 ```execute
-aux4 todo view legacy
+aux4 todo view legacy --status all
 ```
 
 ```expect:partial

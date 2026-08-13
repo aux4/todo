@@ -91,7 +91,7 @@ ids: SPR-001,SPR-002,SPR-003
 ```
 
 ```execute
-aux4 todo add legacy --item "New" && aux4 todo view legacy
+aux4 todo add legacy --item "New" && aux4 todo view legacy --status all
 ```
 
 ```expect:regex

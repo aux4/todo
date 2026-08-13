@@ -7,21 +7,25 @@ export { TodoManager, TodoUtils, TodoParser };
 // --- CLI ---
 
 const COMMANDS = {
-  list:       todoList,
-  view:       todoView,
-  add:        todoNew,
-  addItem:    todoAddItem,
-  complete:   todoComplete,
-  move:       todoMove,
-  assign:     todoAssign,
-  describe:   todoDescribe,
-  comment:    todoComment,
-  comments:   todoComments,
-  subtask:    todoSubtask,
-  subtasks:   todoSubtasks,
-  reference:  todoReference,
-  remove:     todoRemove,
-  removeItem: todoRemoveItem,
+  list:          todoList,
+  view:          todoView,
+  show:          todoShow,
+  add:           todoNew,
+  addItem:       todoAddItem,
+  complete:      todoComplete,
+  move:          todoMove,
+  assign:        todoAssign,
+  describe:      todoDescribe,
+  comment:       todoComment,
+  comments:      todoComments,
+  subtask:       todoSubtask,
+  subtasks:      todoSubtasks,
+  reference:     todoReference,
+  remove:        todoRemove,
+  removeItem:    todoRemoveItem,
+  archiveAdd:    todoArchiveAdd,
+  archiveRemove: todoArchiveRemove,
+  archiveList:   todoArchiveList,
 };
 
 (async () => {
@@ -49,6 +53,13 @@ function requireArgs(args, min, message) {
 
 function mgr(args) { return new TodoManager(arg(args, 0) || '.todo.json'); }
 
+function truthy(v) { return v === 'true' || v === '1' || v === 'yes'; }
+
+function intOr(v, fallback) {
+  const n = parseInt(v, 10);
+  return Number.isNaN(n) ? fallback : n;
+}
+
 // --- Command handlers ---
 
 async function todoList(args) {
@@ -57,19 +68,36 @@ async function todoList(args) {
 
   console.log('Todo Lists:');
   for (const t of todos) {
-    const progress = t.total > 0 ? `(${t.completed}/${t.total})` : '(empty)';
+    let progress;
+    if (t.total === 0 && t.archived === 0) {
+      progress = '(empty)';
+    } else {
+      const arch = t.archived > 0 ? `, ${t.archived} archived` : '';
+      progress = `(${t.completed}/${t.total}${arch})`;
+    }
     console.log(`  [${t.prefix}] ${t.name} ${progress}`);
   }
 }
 
 async function todoView(args) {
   requireArgs(args, 2, 'Todo name is required');
-  const todo = await mgr(args).view(arg(args, 1));
+  const todo = await mgr(args).view(arg(args, 1), { status: arg(args, 2) });
 
   console.log(`## ${todo.title} [${todo.prefix}]`);
   if (todo.items.length === 0) { console.log('  (no items)'); return; }
 
   for (const line of TodoUtils.formatItems(todo.items)) console.log(`  ${line}`);
+}
+
+async function todoShow(args) {
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const name = arg(args, 1);
+  const id = arg(args, 2);
+  const full = truthy(arg(args, 3));
+  const commentsLimit = intOr(arg(args, 4), 3);
+
+  const detail = await mgr(args).show(name, id, { full, commentsLimit });
+  for (const line of TodoUtils.formatItem(detail)) console.log(line);
 }
 
 async function todoNew(args) {
@@ -142,8 +170,13 @@ async function todoComment(args) {
 
 async function todoComments(args) {
   requireArgs(args, 3, 'Todo name and item id are required');
-  const result = await mgr(args).viewComments(arg(args, 1), arg(args, 2));
-  console.log(`## ${result.title}`);
+  const limit = intOr(arg(args, 3), 3);
+  const offset = intOr(arg(args, 4), 0);
+  const result = await mgr(args).viewComments(arg(args, 1), arg(args, 2), { limit, offset });
+
+  const from = result.total === 0 ? 0 : result.offset + 1;
+  const to = result.offset + result.comments.length;
+  console.log(`## ${result.title} — showing ${from}–${to} of ${result.total}`);
   for (const line of TodoUtils.formatComments(result.comments)) console.log(line);
 }
 
@@ -183,4 +216,26 @@ async function todoRemoveItem(args) {
   const [name, id] = [arg(args, 1), arg(args, 2)];
   await mgr(args).removeItem(name, id);
   console.log(`${id} removed from '${name}'.`);
+}
+
+async function todoArchiveAdd(args) {
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const [name, id] = [arg(args, 1), arg(args, 2)];
+  await mgr(args).archiveAdd(name, id);
+  console.log(`${id} archived in '${name}'.`);
+}
+
+async function todoArchiveRemove(args) {
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const [name, id] = [arg(args, 1), arg(args, 2)];
+  await mgr(args).archiveRemove(name, id);
+  console.log(`${id} unarchived in '${name}'.`);
+}
+
+async function todoArchiveList(args) {
+  requireArgs(args, 2, 'Todo name is required');
+  const todo = await mgr(args).viewArchived(arg(args, 1));
+  console.log(`## ${todo.title} [${todo.prefix}] (archived)`);
+  if (todo.items.length === 0) { console.log('  (no archived items)'); return; }
+  for (const line of TodoUtils.formatItems(todo.items)) console.log(`  ${line}`);
 }

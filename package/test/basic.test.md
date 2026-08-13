@@ -89,8 +89,7 @@ aux4 todo new sprint --prefix SPR --item "Fix bug" --description "Login crashes"
 ```expect:partial
 **
 ## sprint [SPR]
-  SPR-001: [ ] Fix bug
-              Login crashes
+  SPR-001: [ ] Fix bug +desc
 ```
 
 ### should reject invalid prefix
@@ -138,8 +137,7 @@ aux4 todo new sprint --prefix SPR && aux4 todo add sprint --item "Deploy" --assi
 ```expect:partial
 **
 ## sprint [SPR]
-  SPR-001: [ ] Deploy @Bob
-              Staging first
+  SPR-001: [ ] Deploy @Bob +desc
 ```
 
 ## view

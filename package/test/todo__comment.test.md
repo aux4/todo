@@ -56,11 +56,11 @@ aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo comment sprint --id
 ```expect:regex
 .*
 .*
-## sprint > SPR-001: Task
+## sprint > SPR-001: Task — showing 1–1 of 1
   \[.*\] Alice: Urgent
 ```
 
-### should show multiple comments in order
+### should show multiple comments newest first
 
 ```execute
 aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo comment sprint --id SPR-001 --author "A" --message "First" && aux4 todo comment sprint --id SPR-001 --author "B" --message "Second" && aux4 todo comments sprint --id SPR-001
@@ -70,9 +70,9 @@ aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo comment sprint --id
 .*
 .*
 .*
-## sprint > SPR-001: Task
-  \[.*\] A: First
+## sprint > SPR-001: Task — showing 1–2 of 2
   \[.*\] B: Second
+  \[.*\] A: First
 ```
 
 ### should show no comments when empty
@@ -83,6 +83,6 @@ aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo comments sprint --i
 
 ```expect:partial
 **
-## sprint > SPR-001: Task
+## sprint > SPR-001: Task — showing 0–0 of 0
   (no comments)
 ```

@@ -1,6 +1,8 @@
 # aux4/todo
 
-Todo list manager for aux4. Create and manage multiple todo lists stored in `.todo.json` files using Jira-style prefixed task IDs (`SPR-001`, `SEO-002`). Each item has a status (`open`, `doing`, `done`) and supports an assignee, a long description, subtasks, timestamped comments, and cross-file references to tasks in other todo files. List all todos with progress counters and view a specific list with strikethrough formatting for completed items.
+Todo list manager for aux4. Create and manage multiple todo lists stored in `.todo.json` files using Jira-style prefixed task IDs (`SPR-001`, `SEO-002`). Each item has a status (`open`, `doing`, `done`) and supports an assignee, a long description, subtasks, timestamped comments, and cross-file references to tasks in other todo files.
+
+The read model is designed to stay small: `view` prints a slim one-line-per-item index (no description bodies, no comment dumps), `show` loads the full detail of a single item by ID, `comments` pages newest-first, and `archive` moves finished items out of the way so busy lists stay readable.
 
 ## Installation
 
@@ -10,13 +12,20 @@ aux4 aux4 pkger install aux4/todo
 
 ## Data Model
 
-Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto-incrementing `counter`. Task IDs are `PREFIX-NNN`. Subtasks live in the same list with `type: "subtask"` and a `parent` reference. Cross-file references map a foreign prefix to an external todo file so a task ID from another file can be resolved.
+Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto-incrementing `counter`. Task IDs are `PREFIX-NNN`. Item bodies live in the `tasks` map, keyed by ID for O(1) lookup. Two id arrays drive iteration:
+
+- `order` — active top-level item IDs, in display order. This is the source of truth for `view` and `list`.
+- `archived` — archived top-level item IDs. These are absent from `order` and hidden from `view` and `list` counts.
+
+Subtasks live in the same `tasks` map with `type: "subtask"` and a `parent` reference; they are discovered by scanning for their parent and are not listed in `order` or `archived`. Cross-file references map a foreign prefix to an external todo file so a task ID from another file can be resolved.
 
 ```json
 {
   "sprint-1": {
     "prefix": "SPR",
     "counter": 3,
+    "order": ["SPR-001"],
+    "archived": [],
     "references": {
       "SEO": "../seo/.todo.json#seo-tasks"
     },
@@ -25,7 +34,6 @@ Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto
         "text": "Import products",
         "completed": false,
         "status": "doing",
-        "order": 0,
         "assignee": "Alex",
         "description": "Import the next 5 IKEA products",
         "comments": [
@@ -41,8 +49,7 @@ Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto
         "type": "subtask",
         "parent": "SPR-001",
         "completed": false,
-        "status": "open",
-        "order": 1
+        "status": "open"
       }
     }
   }
@@ -50,6 +57,10 @@ Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto
 ```
 
 By default todos are stored in `.todo.json` in the current directory. Use the `--file` flag on any command to target a different file path.
+
+### Automatic migration
+
+Older `.todo.json` files that predate the `order`/`archived` arrays (items carried a numeric `order` field instead) are upgraded transparently on the first command that touches the file. The `order` array is rebuilt from the legacy numeric field, any item marked `archived: true` is moved into the `archived` array, the redundant per-item `order` field is dropped, and the file is saved back in the new shape. No manual migration is required.
 
 ### Task status
 
@@ -67,8 +78,9 @@ Every task and subtask has a `status` field with three values:
 
 | Command | Description |
 |---------|-------------|
-| `list` | List all todo lists with progress |
-| `view` | View a specific todo list (top-level items) |
+| `list` | List all todo lists with progress and archived tally |
+| `view` | Slim one-line index of a todo list (with `--status` filter) |
+| `show` | Full detail of a single item by ID (description + recent comments) |
 | `new` | Create a new todo list with a prefix |
 | `add` | Add an item to an existing todo list |
 | `remove` | Remove an item from a todo list |
@@ -80,7 +92,10 @@ Every task and subtask has a `status` field with three values:
 | `subtask` | Add a subtask to a todo item |
 | `subtasks` | View subtasks of a todo item |
 | `comment` | Add a comment to a todo item |
-| `comments` | View comments on a todo item |
+| `comments` | View comments on a todo item (newest first, paginated) |
+| `archive add` | Archive an item (hidden from view and list counts) |
+| `archive remove` | Restore an archived item to the active list |
+| `archive list` | List archived items of a todo list |
 | `reference` | Add a cross-file reference for foreign prefixes |
 
 ### List all todo lists
@@ -91,8 +106,42 @@ aux4 todo list
 
 ### View a specific todo list
 
+`view` prints a slim, one-line-per-item index: ID, status checkbox, text, assignee, subtask progress, comment count, and a `+desc` marker when the item has a description. It never prints the description body or comments — keeping the output small even for busy lists. Use `show` to read a single item in full.
+
+By default `view` shows only `open` and `doing` items (completed work is hidden). Use `--status` to change this: `all` shows everything, or pass a single value (`open`, `doing`, `done`) to filter to exactly that status. Archived items are never shown.
+
 ```bash
 aux4 todo view "sprint-1"
+aux4 todo view "sprint-1" --status all
+aux4 todo view "sprint-1" --status done
+```
+
+```text
+## sprint-1 [SPR]
+  SPR-001: [~] Import products @Alex (2 subtasks: 1/2) (1 comment) +desc
+  SPR-004: [ ] Write release notes
+```
+
+### Show a single item
+
+`show` is the by-ID read primitive: it loads one item's full detail without dumping the whole list. It prints the header (id, status, assignee, text), a subtask summary, the description, and the most recent comments (newest first). The description is truncated to about the first 500 characters unless you pass `--full`, and the last 3 comments are shown unless you pass `--comments N`.
+
+```bash
+aux4 todo show "sprint-1" --id SPR-001
+aux4 todo show "sprint-1" --id SPR-001 --full true --comments 10
+```
+
+```text
+## sprint-1 > SPR-001: Import products
+Status: doing [~]   Assignee: @Alex   Subtasks: 1/2
+
+Description:
+Import the next 5 IKEA products with verified URLs …(truncated — --full for all)
+
+Comments (showing last 3 of 5):
+  [5/22/2026, 9:10:00 AM] Alex: All five verified
+  [5/21/2026, 4:30:00 PM] Sophia: Two more to go
+  [5/20/2026, 11:57:26 AM] Mike: Focus on KALLAX cluster first
 ```
 
 ### Create a new todo list
@@ -151,7 +200,7 @@ aux4 todo assign "sprint-1" --id SPR-001 --assignee "Alex"
 
 ### Describe an item
 
-Set or update the long description shown under the item.
+Set or update the long description. It is not shown in the slim `view` output (only a `+desc` marker appears there) — read it with `aux4 todo show`.
 
 ```bash
 aux4 todo describe "sprint-1" --id SPR-001 --description "Import the next 5 IKEA products with verified URLs"
@@ -168,12 +217,37 @@ aux4 todo subtasks "sprint-1" --id SPR-001
 
 ### Comments
 
-Add a timestamped comment to an item, then view all comments with author and timestamp.
+Add a timestamped comment to an item, then read comments newest-first. `comments` shows the last 3 by default and reports the window with a `showing X–Y of Z` header. Use `--limit` and `--offset` to page through older comments.
 
 ```bash
 aux4 todo comment "sprint-1" --id SPR-001 --author "Mike" --message "Focus on KALLAX cluster first"
 aux4 todo comments "sprint-1" --id SPR-001
+aux4 todo comments "sprint-1" --id SPR-001 --limit 5 --offset 3
 ```
+
+```text
+## sprint-1 > SPR-001: Import products — showing 1–3 of 5
+  [5/22/2026, 9:10:00 AM] Alex: All five verified
+  [5/21/2026, 4:30:00 PM] Sophia: Two more to go
+  [5/20/2026, 11:57:26 AM] Mike: Focus on KALLAX cluster first
+```
+
+### Archive
+
+Archiving moves a finished top-level item out of the active list so busy lists stay readable. Archived items disappear from `view` and no longer count toward `list` progress (which instead reports an archived tally, e.g. `(8/17, 3 archived)`). Archiving is fully reversible — the item keeps all its data.
+
+```bash
+aux4 todo archive add "sprint-1" --id SPR-002       # hide a finished item
+aux4 todo archive list "sprint-1"                    # see what's archived
+aux4 todo archive remove "sprint-1" --id SPR-002     # bring it back
+```
+
+```text
+## sprint-1 [SPR] (archived)
+  SPR-002: [x] O̶l̶d̶ ̶m̶i̶g̶r̶a̶t̶i̶o̶n̶ ̶t̶a̶s̶k̶
+```
+
+Subtasks cannot be archived directly — archive their parent item instead.
 
 ### Cross-file references
 

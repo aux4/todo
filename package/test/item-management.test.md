@@ -24,7 +24,7 @@ SPR-001 in 'sprint' marked as completed.
 ### should show strikethrough on completed item
 
 ```execute
-aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo complete sprint --id SPR-001 && aux4 todo view sprint
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo complete sprint --id SPR-001 && aux4 todo view sprint --status all
 ```
 
 ```expect:regex
@@ -120,6 +120,5 @@ aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo describe sprint --i
 ```expect:partial
 **
 ## sprint [SPR]
-  SPR-001: [ ] Task
-              Details
+  SPR-001: [ ] Task +desc
 ```

@@ -21,7 +21,7 @@ aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo describe sprint --i
 SPR-001 in 'sprint' description updated.
 ```
 
-### should show the description under the item
+### should mark the item with +desc in the slim view
 
 ```execute
 aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo describe sprint --id SPR-001 --description "Import the next 5 products" && aux4 todo view sprint
@@ -30,11 +30,25 @@ aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo describe sprint --i
 ```expect:partial
 **
 ## sprint [SPR]
-  SPR-001: [ ] Task
-              Import the next 5 products
+  SPR-001: [ ] Task +desc
 ```
 
-### should overwrite an existing description
+### should show the full description body via show
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Task" && aux4 todo describe sprint --id SPR-001 --description "Import the next 5 products" && aux4 todo show sprint --id SPR-001
+```
+
+```expect:partial
+## sprint > SPR-001: Task
+Status: open [ ]
+
+Description:
+Import the next 5 products
+**
+```
+
+### should keep the +desc marker after overwriting a description
 
 ```execute
 aux4 todo new sprint --prefix SPR --item "Task" --description "Old" && aux4 todo describe sprint --id SPR-001 --description "New" && aux4 todo view sprint
@@ -43,8 +57,7 @@ aux4 todo new sprint --prefix SPR --item "Task" --description "Old" && aux4 todo
 ```expect:partial
 **
 ## sprint [SPR]
-  SPR-001: [ ] Task
-              New
+  SPR-001: [ ] Task +desc
 ```
 
 ## clear a description
