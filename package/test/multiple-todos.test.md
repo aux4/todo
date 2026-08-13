@@ -1,177 +1,81 @@
-# Multiple Todos Tests
+# Multiple Todo Lists
 
-Tests for managing multiple todo lists and complex scenarios.
-
-```beforeAll
-rm -f .todo.json
+```beforeEach
+rm -f .todo.json .todo.json.lock
 ```
 
 ```afterAll
-rm -f .todo.json
+rm -f .todo.json .todo.json.lock
 ```
 
-## Test 1: Create multiple todos
+## multiple lists
 
-### should create several todo lists
+### should create and list multiple todos
 
 ```execute
-aux4 todo new "Work" --item "Review PR"; aux4 todo new "Personal" --item "Buy groceries"; aux4 todo new "Learning" --item "Read docs"
+aux4 todo new sprint --prefix SPR --item "A" && aux4 todo new backlog --prefix BKL --item "B" && aux4 todo list
 ```
 
-```expect
-Todo 'Work' created.
-Todo 'Personal' created.
-Todo 'Learning' created.
-```
-
-### should list all todos
-
-```execute
-aux4 todo list
-```
-
-```expect
+```expect:partial
+**
 Todo Lists:
-  Work (0/1)
-  Personal (0/1)
-  Learning (0/1)
+  [SPR] sprint (0/1)
+  [BKL] backlog (0/1)
 ```
 
-## Test 2: Work with specific todos
-
-### should add items to different todos
+### should add items to different lists
 
 ```execute
-aux4 todo add "Work" --item "Deploy code"; aux4 todo add "Personal" --item "Call dentist"
+aux4 todo new sprint --prefix SPR --item "A" && aux4 todo new backlog --prefix BKL --item "B" && aux4 todo add sprint --item "C" && aux4 todo add backlog --item "D" && aux4 todo list
 ```
 
-```expect
-Item added to 'Work'.
-Item added to 'Personal'.
-```
-
-### should show updated progress
-
-```execute
-aux4 todo list
-```
-
-```expect
+```expect:partial
+**
 Todo Lists:
-  Work (0/2)
-  Personal (0/2)
-  Learning (0/1)
+  [SPR] sprint (0/2)
+  [BKL] backlog (0/2)
 ```
 
-## Test 3: Mixed completion states
+## mixed completion
 
-### should complete some items
+### should track progress independently
 
 ```execute
-aux4 todo complete "Work" --index 0; aux4 todo complete "Personal" --index 1; aux4 todo complete "Learning" --index 0
+aux4 todo new sprint --prefix SPR --item "A" && aux4 todo new backlog --prefix BKL --item "B" && aux4 todo add sprint --item "C" && aux4 todo complete sprint --id SPR-001 && aux4 todo list
 ```
 
-```expect
-Item 0 in 'Work' marked as completed.
-Item 1 in 'Personal' marked as completed.
-Item 0 in 'Learning' marked as completed.
-```
-
-### should show mixed progress counters
-
-```execute
-aux4 todo list
-```
-
-```expect
+```expect:partial
+**
 Todo Lists:
-  Work (1/2)
-  Personal (1/2)
-  Learning (1/1)
+  [SPR] sprint (1/2)
+  [BKL] backlog (0/1)
 ```
 
-## Test 4: View specific todos
+## delete one list
 
-### should view work todo
+### should only remove the specified list
 
 ```execute
-aux4 todo view "Work"
+aux4 todo new sprint --prefix SPR --item "A" && aux4 todo new backlog --prefix BKL --item "B" && aux4 todo delete sprint && aux4 todo list
 ```
 
-```expect:regex
-## Work
-  0: \[x\] .*̶.*
-  1: \[ \] Deploy code
-```
-
-### should view personal todo
-
-```execute
-aux4 todo view "Personal"
-```
-
-```expect:regex
-## Personal
-  0: \[ \] Buy groceries
-  1: \[x\] .*̶.*
-```
-
-## Test 5: Delete one todo
-
-### should delete learning todo
-
-```execute
-aux4 todo delete "Learning"
-```
-
-```expect
-Todo 'Learning' removed.
-```
-
-### should verify only two remain
-
-```execute
-aux4 todo list
-```
-
-```expect
+```expect:partial
+**
 Todo Lists:
-  Work (1/2)
-  Personal (1/2)
+  [BKL] backlog (0/1)
 ```
 
-## Test 6: Empty todo handling
+## special characters
 
-### should create todo without initial item
+### should handle dashes and underscores in names
 
 ```execute
-aux4 todo new "Empty"
+aux4 todo new "project-x" --prefix PRJ --item "Task" && aux4 todo new "test_case" --prefix TST --item "Task" && aux4 todo list
 ```
 
-```expect
-Todo 'Empty' created.
-```
-
-### should view empty todo
-
-```execute
-aux4 todo view "Empty"
-```
-
-```expect
-## Empty
-  (no items)
-```
-
-### should show empty todo in list
-
-```execute
-aux4 todo list
-```
-
-```expect
+```expect:partial
+**
 Todo Lists:
-  Work (1/2)
-  Personal (1/2)
-  Empty (empty)
+  [PRJ] project-x (0/1)
+  [TST] test_case (0/1)
 ```

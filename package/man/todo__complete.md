@@ -1,11 +1,11 @@
 # todo complete
 
-Mark a todo item as complete or incomplete.
+Mark a todo item as complete or incomplete. Toggles by default.
 
 ## Usage
 
 ```bash
-aux4 todo complete <name> --index <number> [--status <true|false>] [--file <path>]
+aux4 todo complete <name> --id <PREFIX-NNN> [--status <true|false>] [--file <path>]
 ```
 
 ## Variables
@@ -13,16 +13,16 @@ aux4 todo complete <name> --index <number> [--status <true|false>] [--file <path
 | Name | Description | Default |
 |------|-------------|---------|
 | `name` | Todo list name (required) | |
-| `--index` | Item index, 0-based (required) | |
-| `--status` | Completion status | `true` |
+| `--id` | Task id, e.g. SPR-001 (required) | |
+| `--status` | Explicit completion status | toggles |
 | `--file` | Todo file path | `.todo.json` |
 
 ## Example
 
 ```bash
-aux4 todo complete "Work" --index 0
+aux4 todo complete "sprint-1" --id SPR-001
 ```
 
-```
-Item 0 in 'Work' marked as completed.
+```text
+SPR-001 in 'sprint-1' marked as completed.
 ```

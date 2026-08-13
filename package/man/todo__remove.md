@@ -1,11 +1,11 @@
 # todo remove
 
-Remove an item from a todo list.
+Remove an item from a todo list. If the item has subtasks, they are also removed.
 
 ## Usage
 
 ```bash
-aux4 todo remove <name> --index <number> [--file <path>]
+aux4 todo remove <name> --id <PREFIX-NNN> [--file <path>]
 ```
 
 ## Variables
@@ -13,15 +13,15 @@ aux4 todo remove <name> --index <number> [--file <path>]
 | Name | Description | Default |
 |------|-------------|---------|
 | `name` | Todo list name (required) | |
-| `--index` | Item index, 0-based (required) | |
+| `--id` | Task id, e.g. SPR-001 (required) | |
 | `--file` | Todo file path | `.todo.json` |
 
 ## Example
 
 ```bash
-aux4 todo remove "Work" --index 1
+aux4 todo remove "sprint-1" --id SPR-002
 ```
 
-```
-Item 1 removed from 'Work'.
+```text
+SPR-002 removed from 'sprint-1'.
 ```
