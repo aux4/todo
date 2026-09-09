@@ -87,15 +87,20 @@ Every task and subtask has a `status` field with three values:
 | `complete` | Mark a todo item as complete or incomplete |
 | `move` | Move a todo item to a status (open, doing, done) |
 | `delete` | Delete an entire todo list |
+| `rename` | Rename a todo item (change its text) |
+| `rename-list` | Rename a todo list (keeps all items) |
 | `assign` | Assign a todo item to someone |
 | `describe` | Set or update the description of a todo item |
 | `subtask` | Add a subtask to a todo item |
 | `subtasks` | View subtasks of a todo item |
 | `comment` | Add a comment to a todo item |
 | `comments` | View comments on a todo item (newest first, paginated) |
+| `comment-remove` | Remove a comment by index (own-comment gated) |
 | `archive add` | Archive an item (hidden from view and list counts) |
 | `archive remove` | Restore an archived item to the active list |
 | `archive list` | List archived items of a todo list |
+| `archive offload` | Move archived items into a separate archive file to shrink the ledger |
+| `merge` | Combine multiple todo files into one (schema-aware) |
 | `reference` | Add a cross-file reference for foreign prefixes |
 
 ### List all todo lists
@@ -248,6 +253,38 @@ aux4 todo archive remove "sprint-1" --id SPR-002     # bring it back
 ```
 
 Subtasks cannot be archived directly — archive their parent item instead.
+
+### Offloading archived history
+
+Over time a heavily used ledger accumulates archived items and their comment history, which makes the live file slower to parse and noisier in git. `archive offload` moves the archived items of a list (or of every list) out of the live file into a separate archive file, leaving only active items behind. The archive file is itself a normal todo file, so the offloaded history stays fully readable — `archive list` and `show` against the archive file work exactly as they do against a live file.
+
+```bash
+aux4 todo archive offload "sprint-1"                       # → .todo.archive.json (default)
+aux4 todo archive list "sprint-1" --file .todo.archive.json  # read offloaded history
+aux4 todo archive offload --file .todo.json --into shared-archive.json  # all lists into one archive
+```
+
+```text
+Offloaded 2 archived item(s) from sprint-1 to .todo.archive.json.
+```
+
+With no `--into`, the archive file is derived from the live file by inserting an `.archive` segment (`.todo.json` → `.todo.archive.json`). With `--into <file>`, offloaded items are merged into an existing archive you name (same-schema merge, the archive winning on any id conflict), so repeated offloads are additive and safe. To bring offloaded items back, merge the archive into the live file with `todo merge` (below).
+
+### Merging todo files
+
+`merge` combines one or more todo files into a single result, reconciling them with awareness of the todo schema — per list it unions `tasks`, `order`, and `archived`, takes `counter = max`, and unions `references`. Files are merged left to right; the first is the base and wins on any task-id conflict, which makes merging idempotent. Use it to restore an offloaded archive, to consolidate ledgers split across machines or branches, or to recover from a bad split.
+
+```bash
+aux4 todo merge team-a.json team-b.json --into combined.json   # consolidate two ledgers
+aux4 todo merge .todo.json .todo.archive.json --into .todo.json # restore an offloaded archive
+aux4 todo merge base.json patch.json                            # inspect the merge on stdout
+```
+
+```text
+Merged 2 file(s) into combined.json.
+```
+
+With `--into <file>` the merged result is written back in place (atomic, 2-space pretty-print); without it, the merged JSON is printed to stdout. `aux4 json merge` exists but is a generic array-by-id merge and is not todo-schema-aware — use `todo merge` for todo files.
 
 ### Cross-file references
 
