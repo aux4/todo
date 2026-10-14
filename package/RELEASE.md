@@ -1,3 +1,15 @@
+# aux4/todo 1.4.2
+
+Declares the `file` variable on every command as a core scheme-aware file path (`"file": "read"` for read-only commands, `"file": "readwrite"` for commands that write), so `--file cloud://...` works end-to-end once `aux4/cloud` (or any other scheme provider) is installed. Purely additive: the on-disk format, local-file behavior, and every existing test are unchanged — this only opts the variable into core's `<scheme>://` resolution, which is a no-op for any value without `://` in it.
+
+## New
+
+- `--file` now accepts `cloud://<path>` (or any other registered `<scheme>://`) on every `todo` command, resolved by aux4 core before the command runs. `aux4/cloud` is an optional dependency — only needed if you actually pass a `cloud://` path — not a hard dependency of `aux4/todo`.
+
+## Known limitation
+
+- The lock file (`<file>.lock`) and the atomic-write temp file (`<file>.tmp.<pid>`) are sibling paths derived from `--file`. For a local path this is harmless (same directory, cleaned up before the command returns). For a `cloud://` path, core substitutes a local temp file for the duration of the command, so the lock/tmp siblings land next to *that* local temp file, not next to the remote object — they are still created and removed within the single invocation and are never put back to cloud storage, so no cloud-side litter and no correctness issue, but do not rely on the lock providing cross-machine locking for a shared `cloud://` file: two concurrent processes on two different machines each get their own local temp file and their own lock, so the lock does not prevent a concurrent remote read-modify-write race. The default archive path for `todo archive offload` (`<file>` with `.json` replaced by `.archive.json`) has the same sibling-derivation shape; call it explicitly with `--into <cloud://...>` when offloading a cloud-stored list instead of relying on the derived default, otherwise the derived default is computed off the local temp path and the offloaded data is not written back anywhere.
+
 # aux4/todo 1.4.0
 
 Native archive offload and schema-aware merge, so a heavily used ledger can be kept small without losing history and split ledgers can be rejoined. Strictly additive — all existing tests pass unchanged, the on-disk format is unchanged, writes stay atomic and 2-space pretty-printed.

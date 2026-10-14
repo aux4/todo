@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "todo",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Todo list manager for aux4",
   "license": "Apache-2.0",
   "tags": [
@@ -46,7 +46,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "read"
               },
               {
                 "name": "format",
@@ -67,7 +68,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "read"
               },
               {
                 "name": "name",
@@ -98,7 +100,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "read"
               },
               {
                 "name": "name",
@@ -138,7 +141,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -178,7 +182,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -213,7 +218,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -238,7 +244,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -268,7 +275,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -302,7 +310,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -341,7 +350,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "read"
               },
               {
                 "name": "name",
@@ -371,7 +381,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -400,7 +411,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -434,7 +446,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -464,7 +477,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -494,7 +508,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -527,7 +542,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "read"
               },
               {
                 "name": "name",
@@ -567,7 +583,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -615,7 +632,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -644,7 +662,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -697,7 +716,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -722,7 +742,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",
@@ -747,7 +768,8 @@
               {
                 "name": "file",
                 "text": "Todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "read"
               },
               {
                 "name": "name",
@@ -768,7 +790,8 @@
               {
                 "name": "file",
                 "text": "Live todo file path",
-                "default": ".todo.json"
+                "default": ".todo.json",
+                "file": "readwrite"
               },
               {
                 "name": "name",

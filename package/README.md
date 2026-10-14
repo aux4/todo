@@ -297,3 +297,13 @@ aux4 todo reference "sprint-1" --prefix SEO --target "../seo/.todo.json#seo-task
 ## Storage
 
 By default, todos are stored in `.todo.json` in the current directory. Use the `--file` flag on any command to specify a different file path. Writes are atomic (written to a temp file then renamed) and guarded by a lock file so concurrent processes do not corrupt the list.
+
+### Cloud storage
+
+`--file` also accepts a `cloud://` path (e.g. `--file cloud://my-package/.todo.json`) to read and write the todo list from aux4 Cloud storage instead of the local disk. This requires `aux4/cloud` to be installed — it is not a hard dependency of `aux4/todo`, so install it separately if you want to use `cloud://` paths:
+
+```bash
+aux4 aux4 pkger install aux4/cloud
+```
+
+Without `aux4/cloud` installed, a `cloud://` path fails with an error naming the missing scheme provider; local paths are unaffected either way.
