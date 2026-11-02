@@ -4,6 +4,8 @@ Show full detail for a single todo item — the by-ID read primitive. Prints a h
 
 By default the description is truncated to roughly the first 500 characters (with a `…(truncated — --full for all)` marker) and the last 3 comments are shown. Use `--full` for the entire description and `--comments N` to change how many comments appear.
 
+The status line also shows `Type: <kind>` when the item's kind isn't the default `task` (see `aux4 todo add --type`), and `Goal: <id>` when it's linked to a goal (see `aux4 todo link`). Both are omitted for a plain, unlinked task, so default output is unchanged.
+
 ## Usage
 
 ```bash
@@ -28,7 +30,7 @@ aux4 todo show "sprint-1" --id SPR-001
 
 ```text
 ## sprint-1 > SPR-001: Import products
-Status: doing [~]   Assignee: @Alex   Subtasks: 1/2
+Status: doing [~]   Assignee: @Alex   Subtasks: 1/2   Type: bug   Goal: SPR-000
 
 Description:
 Import the next 5 IKEA products with verified URLs. Start with the KALLAX cluster …(truncated — --full for all)

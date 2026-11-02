@@ -7,7 +7,7 @@ Archived items are never shown by `view`. Use `aux4 todo archive list` to see th
 ## Usage
 
 ```bash
-aux4 todo view <name> [--status <open|doing|done|all>] [--file <path>]
+aux4 todo view <name> [--status <open|doing|done|all>] [--type <kind>] [--goal <goalId>] [--file <path>]
 ```
 
 ## Variables
@@ -16,6 +16,8 @@ aux4 todo view <name> [--status <open|doing|done|all>] [--file <path>]
 |------|-------------|---------|
 | `name` | Todo list name (required) | |
 | `--status` | Filter by status: `open`, `doing`, `done`, or `all`. When unset, shows `open` + `doing` (hides `done`). | *(open + doing)* |
+| `--type` | Filter to a single item kind (e.g. `goal`, `bug`); unset shows every kind | |
+| `--goal` | Filter to tasks linked to this goal id | |
 | `--file` | Todo file path | `.todo.json` |
 
 ## Status filter
@@ -47,4 +49,23 @@ aux4 todo view "sprint-1" --status all
   SPR-001: [~] Import products @Alex (2 subtasks: 1/2) (1 comment) +desc
   SPR-002: [x] S̶E̶O̶ ̶a̶u̶d̶i̶t̶ @Sophia
   SPR-004: [ ] Write release notes
+```
+
+An item whose kind isn't the default `task` (see `aux4 todo add --type`) shows a `[kind]` tag:
+
+```bash
+aux4 todo view "sprint-1" --status all
+```
+
+```text
+## sprint-1 [SPR]
+  SPR-000: [ ] [goal] Ship v2
+  SPR-001: [~] Import products @Alex (2 subtasks: 1/2) (1 comment) +desc
+```
+
+Filter to a single kind, or to tasks linked to a goal:
+
+```bash
+aux4 todo view "sprint-1" --type bug
+aux4 todo view "sprint-1" --goal SPR-000
 ```
