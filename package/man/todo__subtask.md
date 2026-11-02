@@ -2,7 +2,7 @@
 
 Add a subtask to a todo item. Subtasks are stored in the same list with a parent reference. Subtasks of subtasks are not allowed.
 
-Subtask-ness comes from the `parent` reference, not from `type` — so a subtask can carry any kind. Without `--type`, a subtask keeps the legacy `subtask` marker on disk (unchanged on-disk shape for the common case); passing `--type` gives it a real semantic kind (e.g. `bug`) while it's still correctly nested and counted under its parent.
+Subtask-ness comes from the `parent` reference, not from `type` — so a subtask can carry any kind. Without `--type`, a subtask keeps the legacy `subtask` marker on disk (unchanged on-disk shape for the common case); passing `--type` gives it a real semantic kind (e.g. `bug`) while it's still correctly nested and counted under its parent. `--type goal` is rejected — a subtask can never be a goal.
 
 ## Usage
 

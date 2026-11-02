@@ -230,7 +230,7 @@
         {
           "name": "remove",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js removeItem values(file, name, id)"
+            "node ${packageDir}/lib/aux4-todo.js removeItem values(file, name, id, cascade)"
           ],
           "help": {
             "text": "Remove an item from a todo list",
@@ -248,6 +248,11 @@
               {
                 "name": "id",
                 "text": "Item id (required)"
+              },
+              {
+                "name": "cascade",
+                "text": "Remove subtasks along with the item (required if the item has subtasks)",
+                "default": "false"
               }
             ]
           }

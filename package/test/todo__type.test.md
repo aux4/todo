@@ -123,3 +123,16 @@ aux4 todo new sprint --prefix SPR --item "Ship v2" --type goal && aux4 todo add 
   SPR-001: [ ] [goal] Ship v2
   SPR-002: [ ] [bug] Fix crash
 ```
+
+## reject goal subtasks
+
+### should reject --type goal on subtask
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Parent" && aux4 todo subtask sprint --id SPR-001 --item "Child" --type goal 2>&1; true
+```
+
+```expect:partial
+**
+Cannot create a subtask with type 'goal'*?
+```

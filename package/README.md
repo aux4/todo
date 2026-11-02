@@ -183,9 +183,18 @@ aux4 todo add "sprint-1" --item "SEO audit" --assignee "Sophia"
 
 ### Remove an item
 
+If the item has subtasks (even subtasks living in a different list in the same file), `remove` refuses and names the count — pass `--cascade true` to remove the item and all its subtasks. Removing a goal unlinks every task that pointed at it (and reports how many).
+
 ```bash
 aux4 todo remove "sprint-1" --id SPR-001
+aux4 todo remove "sprint-1" --id SPR-001 --cascade true   # item has subtasks
 ```
+
+```text
+Item 'SPR-001' has 2 subtasks. Use --cascade true to remove it and all its subtasks.
+```
+
+**Breaking change (1.5.0):** earlier versions removed a parent's subtasks silently. `remove` now fails on a parent with subtasks unless `--cascade true` is passed.
 
 ### Mark an item complete or incomplete
 
@@ -229,7 +238,7 @@ aux4 todo describe "sprint-1" --id SPR-001 --description "Import the next 5 IKEA
 
 ### Subtasks
 
-Add a subtask to an item, then view all subtasks of that item. Subtasks of subtasks are not allowed.
+Add a subtask to an item, then view all subtasks of that item. Subtasks of subtasks are not allowed, and a subtask can never be given `--type goal`.
 
 ```bash
 aux4 todo subtask "sprint-1" --id SPR-001 --item "Verify KALLAX URL" --assignee "Alex"
@@ -274,6 +283,8 @@ Goals:
 ```
 
 Progress counts each linked task and, for any linked task that has subtasks, its subtasks too — `(3/5)` means 3 of 5 total units are done. A goal whose linked tasks are all done is flagged with `— all linked tasks done`; completing the goal item itself is always manual, `goals` never does it for you. A subtask cannot be linked directly — link its parent instead.
+
+An archived goal is hidden from `goals`, but an archived linked task still counts toward its (non-archived) goal's progress. Removing a goal (`aux4 todo remove`) clears the `goal` field on every task that pointed at it and reports how many tasks were unlinked.
 
 ### Comments
 

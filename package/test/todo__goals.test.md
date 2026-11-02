@@ -156,3 +156,65 @@ aux4 todo new sprint --prefix SPR --item "Ship v2" --type goal && aux4 todo add 
 **
 Cannot link a subtask to a goal. Link its parent instead.
 ```
+
+## removing a goal
+
+### should unlink every task pointing at the removed goal and report the count
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Ship v2" --type goal && aux4 todo add sprint --item "Task A" --goal SPR-001 && aux4 todo new backlog --prefix BKL --item "Other task" && aux4 todo link backlog --id BKL-001 --goal SPR-001 && aux4 todo remove sprint --id SPR-001
+```
+
+```expect:partial
+**
+SPR-001 removed from 'sprint'. 2 tasks unlinked.
+```
+
+### should leave the previously linked tasks unlinked (no dangling goal field)
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Ship v2" --type goal && aux4 todo add sprint --item "Task A" --goal SPR-001 && aux4 todo remove sprint --id SPR-001 && aux4 todo goals
+```
+
+```expect:partial
+**
+Goals:
+  (no goals)
+```
+
+### should not print an unlink count when removing a non-goal item
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Plain task" && aux4 todo remove sprint --id SPR-001
+```
+
+```expect:partial
+**
+SPR-001 removed from 'sprint'.
+```
+
+## archived goals
+
+### should hide an archived goal from the goals rollup
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Ship v2" --type goal && aux4 todo archive add sprint --id SPR-001 && aux4 todo goals
+```
+
+```expect:partial
+**
+Goals:
+  (no goals)
+```
+
+### should still count an archived linked task in the goal's rollup
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Ship v2" --type goal && aux4 todo add sprint --item "Task A" --goal SPR-001 && aux4 todo archive add sprint --id SPR-002 && aux4 todo goals
+```
+
+```expect:partial
+**
+Goals:
+  SPR-001: [ ] Ship v2 [sprint] (0/1)
+```

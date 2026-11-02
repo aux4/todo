@@ -1,19 +1,25 @@
 # aux4/todo 1.5.0
 
-Semantic item kinds and goal linking, so a stream can carry goals alongside its tasks and roll up progress against them. Strictly additive — all existing tests pass unchanged, default-task output is byte-identical, and the on-disk format only grows new optional fields.
+Semantic item kinds and goal linking, so a stream can carry goals alongside its tasks and roll up progress against them. The item-kind and goal-linking additions are strictly additive — all pre-existing tests pass unchanged, default-task output is byte-identical, and the on-disk format only grows new optional fields. `remove` of a parent with subtasks is a **breaking change** (see below).
 
 ## New
 
-- **`type` is now a semantic item kind** (`task` by default, or any free lowercase string such as `goal`, `bug`, `feature`) instead of the old subtask marker. `--type <kind>` is accepted on `new`, `add`, and `subtask`. `view` and `show` display the kind with a `[kind]` tag whenever it isn't the default `task` — a plain task's output is unchanged.
+- **`type` is now a semantic item kind** (`task` by default, or any free lowercase string such as `goal`, `bug`, `feature`) instead of the old subtask marker. `--type <kind>` is accepted on `new`, `add`, and `subtask` (`--type goal` is rejected on `subtask` — a subtask can never be a goal). `view` and `show` display the kind with a `[kind]` tag whenever it isn't the default `task` — a plain task's output is unchanged.
 - **Subtask-ness is now derived from `parent` presence, not from `type`.** The legacy `type: "subtask"` marker is still written by default when `subtask` is called without `--type` (so the on-disk shape for an untyped subtask is unchanged), but a subtask can now carry any kind (e.g. `subtask ... --type bug`) and is still correctly counted and nested under its parent. The one-level nesting rule (no subtask of a subtask) is unchanged.
 - **`todo view <name> --type <kind>`** — filter a list's top-level items to a single kind.
 - **Goal linking** — a top-level task can link to a goal item via a new `goal: "<id>"` field: `todo link <name> --id <id> --goal <goalId>` / `todo unlink <name> --id <id>`, or `todo add <name> --item <text> --goal <goalId>` to link at creation. Linking is cross-list: the goal can live in any stream in the same file (resolved by id). Subtasks cannot be linked directly — link their parent.
 - **`todo view <name> --goal <id>`** — filter a list's top-level items to those linked to a goal.
-- **`todo goals [--file <file>]`** — one line per goal item (any list in the file), with linked-task progress rolled up (done/total, counting each linked task's own subtasks too) and a flag when every linked task is done. Goal completion itself stays manual — `goals` only reports the rollup, it never auto-completes the goal.
+- **`todo goals [--file <file>]`** — one line per non-archived goal item (any list in the file), with linked-task progress rolled up (done/total, counting each linked task's own subtasks too) and a flag when every linked task is done. An archived goal is hidden from this listing; an archived linked task still counts toward its (non-archived) goal's rollup. Goal completion itself stays manual — `goals` only reports the rollup, it never auto-completes the goal.
+- **Removing a goal unlinks its tasks.** `todo remove <name> --id <goalId>` on an item whose kind is `goal` clears the `goal` field on every top-level task (any list in the file) that pointed at it, and reports how many tasks were unlinked.
+
+## Changed — BREAKING
+
+- **`todo remove` on a parent with subtasks now fails unless `--cascade true` is passed.** Earlier versions silently removed a parent's subtasks along with it. `remove` now errors, naming how many subtasks the item has (subtasks are searched across every list in the file, not just the one named), and requires `--cascade true` to proceed with removing the item and all of its subtasks — matching the previous (now opt-in) behavior.
 
 ## Migration
 
 - A legacy on-disk `type: "subtask"` marker (with `parent` set) is read as "no kind — task" in memory immediately, since subtask-ness now comes from `parent`. Like the v3 order/archived migration, this is only ever persisted the next time that list is written; a pure read never rewrites the file.
+- Any script or integration that calls `todo remove` on an item that may have subtasks must add `--cascade true` to keep removing them; otherwise the call now fails with an error instead of silently cascading.
 
 # aux4/todo 1.4.0
 

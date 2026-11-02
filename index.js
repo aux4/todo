@@ -353,9 +353,21 @@ async function todoRemove(args) {
 
 async function todoRemoveItem(args) {
   requireArgs(args, 3, 'Todo name and item id are required');
-  const [name, id] = [arg(args, 1), arg(args, 2)];
-  await mgr(args).removeItem(name, id);
-  console.log(`${id} removed from '${name}'.`);
+  const [name, id, cascadeRaw] = [arg(args, 1), arg(args, 2), arg(args, 3)];
+  const cascade = cascadeRaw === 'true';
+  const result = await mgr(args).removeItem(name, id, { cascade });
+  if (OUT_JSON) { console.log(JSON.stringify(result)); return; }
+
+  let msg = `${id} removed from '${name}'.`;
+  if (result.subtasksRemoved) {
+    const s = result.subtasksRemoved !== 1 ? 's' : '';
+    msg += ` ${result.subtasksRemoved} subtask${s} removed.`;
+  }
+  if (result.unlinkedCount) {
+    const s = result.unlinkedCount !== 1 ? 's' : '';
+    msg += ` ${result.unlinkedCount} task${s} unlinked.`;
+  }
+  console.log(msg);
 }
 
 async function todoArchiveAdd(args) {

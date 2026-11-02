@@ -115,14 +115,48 @@ Cannot add subtask to a subtask*?
 
 ## remove parent
 
-### should remove parent and all subtasks
+### should reject removing a parent with subtasks without --cascade
 
 ```execute
-aux4 todo new sprint --prefix SPR --item "Parent" && aux4 todo add sprint --item "Other" && aux4 todo subtask sprint --id SPR-001 --item "Child" && aux4 todo remove sprint --id SPR-001 && aux4 todo view sprint
+aux4 todo new sprint --prefix SPR --item "Parent" && aux4 todo subtask sprint --id SPR-001 --item "Child" && aux4 todo remove sprint --id SPR-001 2>&1; true
 ```
 
 ```expect:partial
 **
+Item 'SPR-001' has 1 subtask. Use --cascade true to remove it and all its subtasks.
+```
+
+### should reject with the correct plural count for multiple subtasks
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Parent" && aux4 todo subtask sprint --id SPR-001 --item "A" && aux4 todo subtask sprint --id SPR-001 --item "B" && aux4 todo remove sprint --id SPR-001 2>&1; true
+```
+
+```expect:partial
+**
+Item 'SPR-001' has 2 subtasks. Use --cascade true to remove it and all its subtasks.
+```
+
+### should remove parent and all subtasks with --cascade true
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Parent" && aux4 todo add sprint --item "Other" && aux4 todo subtask sprint --id SPR-001 --item "Child" && aux4 todo remove sprint --id SPR-001 --cascade true && aux4 todo view sprint
+```
+
+```expect:partial
+**
+SPR-001 removed from 'sprint'. 1 subtask removed.
 ## sprint [SPR]
   SPR-002: [ ] Other
+```
+
+### should remove a parent with no subtasks without needing --cascade
+
+```execute
+aux4 todo new sprint --prefix SPR --item "Lonely" && aux4 todo remove sprint --id SPR-001
+```
+
+```expect:partial
+**
+SPR-001 removed from 'sprint'.
 ```
