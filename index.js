@@ -24,6 +24,9 @@ const COMMANDS = {
   commentRemove:  todoCommentRemove,
   subtask:        todoSubtask,
   subtasks:       todoSubtasks,
+  goals:          todoGoals,
+  link:           todoLink,
+  unlink:         todoUnlink,
   reference:      todoReference,
   remove:         todoRemove,
   removeItem:     todoRemoveItem,
@@ -104,8 +107,10 @@ async function todoView(args) {
   requireArgs(args, 2, 'Todo name is required');
   const name = arg(args, 1);
   const show = resolveViewStatuses(arg(args, 2));
+  const type = arg(args, 3);
+  const goal = arg(args, 4);
 
-  const todo = await mgr(args).view(name);
+  const todo = await mgr(args).view(name, { type, goal });
   const items = todo.items.filter(it => show.includes(it.status));
 
   if (OUT_JSON) { console.log(JSON.stringify({ ...todo, items })); return; }
@@ -130,6 +135,8 @@ async function todoShow(args) {
   let statusLine = `Status: ${r.status} ${marker}`;
   if (r.assignee) statusLine += `   Assignee: @${r.assignee}`;
   if (r.subtaskTotal > 0) statusLine += `   Subtasks: ${r.subtaskCompleted}/${r.subtaskTotal}`;
+  if (r.kind && r.kind !== 'task') statusLine += `   Type: ${r.kind}`;
+  if (r.goal) statusLine += `   Goal: ${r.goal}`;
 
   const out = [`## ${name} > ${id}: ${r.text}`, statusLine];
 
@@ -175,9 +182,10 @@ async function todoNew(args) {
   const item = arg(args, 3);
   const assignee = arg(args, 4);
   const description = arg(args, 5);
+  const type = arg(args, 6);
 
   const items = item && item.trim() ? [item] : [];
-  await mgr(args).add(name, prefix, items, { assignee, description });
+  await mgr(args).add(name, prefix, items, { assignee, description, type });
   console.log(`Todo '${name}' [${prefix}] created.`);
 }
 
@@ -187,7 +195,12 @@ async function todoAddItem(args) {
   const item = arg(args, 2);
   if (!item.trim()) throw new Error('Item text cannot be empty');
 
-  const result = await mgr(args).addItem(name, item, { assignee: arg(args, 3), description: arg(args, 4) });
+  const result = await mgr(args).addItem(name, item, {
+    assignee: arg(args, 3),
+    description: arg(args, 4),
+    type: arg(args, 5),
+    goal: arg(args, 6)
+  });
   console.log(`${result.id} added to '${name}'.`);
 }
 
@@ -278,9 +291,39 @@ async function todoComments(args) {
 
 async function todoSubtask(args) {
   requireArgs(args, 4, 'Todo name, item id, and subtask text are required');
-  const [name, id, item, assignee, desc] = [arg(args, 1), arg(args, 2), arg(args, 3), arg(args, 4), arg(args, 5)];
-  const result = await mgr(args).addSubtask(name, id, item, { assignee, description: desc });
+  const [name, id, item, assignee, desc, type] = [
+    arg(args, 1), arg(args, 2), arg(args, 3), arg(args, 4), arg(args, 5), arg(args, 6)
+  ];
+  const result = await mgr(args).addSubtask(name, id, item, { assignee, description: desc, type });
   console.log(`${result.id} added as subtask of ${id} in '${name}'.`);
+}
+
+async function todoGoals(args) {
+  const goals = await mgr(args).goals();
+  if (OUT_JSON) { console.log(JSON.stringify(goals)); return; }
+
+  console.log('Goals:');
+  if (goals.length === 0) { console.log('  (no goals)'); return; }
+  for (const g of goals) {
+    const marker = TodoUtils.statusMarker(g.status);
+    const suffix = g.allDone ? ' — all linked tasks done' : '';
+    console.log(`  ${g.id}: ${marker} ${g.text} [${g.name}] (${g.linkedCompleted}/${g.linkedTotal})${suffix}`);
+  }
+}
+
+async function todoLink(args) {
+  requireArgs(args, 4, 'Todo name, item id, and goal id are required');
+  const [name, id, goal] = [arg(args, 1), arg(args, 2), arg(args, 3)];
+  const result = await mgr(args).link(name, id, goal);
+  if (OUT_JSON) { console.log(JSON.stringify(result)); return; }
+  console.log(`${id} in '${name}' linked to goal ${goal}.`);
+}
+
+async function todoUnlink(args) {
+  requireArgs(args, 3, 'Todo name and item id are required');
+  const [name, id] = [arg(args, 1), arg(args, 2)];
+  await mgr(args).unlink(name, id);
+  console.log(`${id} in '${name}' unlinked from its goal.`);
 }
 
 async function todoSubtasks(args) {
@@ -310,9 +353,21 @@ async function todoRemove(args) {
 
 async function todoRemoveItem(args) {
   requireArgs(args, 3, 'Todo name and item id are required');
-  const [name, id] = [arg(args, 1), arg(args, 2)];
-  await mgr(args).removeItem(name, id);
-  console.log(`${id} removed from '${name}'.`);
+  const [name, id, cascadeRaw] = [arg(args, 1), arg(args, 2), arg(args, 3)];
+  const cascade = cascadeRaw === 'true';
+  const result = await mgr(args).removeItem(name, id, { cascade });
+  if (OUT_JSON) { console.log(JSON.stringify(result)); return; }
+
+  let msg = `${id} removed from '${name}'.`;
+  if (result.subtasksRemoved) {
+    const s = result.subtasksRemoved !== 1 ? 's' : '';
+    msg += ` ${result.subtasksRemoved} subtask${s} removed.`;
+  }
+  if (result.unlinkedCount) {
+    const s = result.unlinkedCount !== 1 ? 's' : '';
+    msg += ` ${result.unlinkedCount} task${s} unlinked.`;
+  }
+  console.log(msg);
 }
 
 async function todoArchiveAdd(args) {

@@ -17,7 +17,7 @@ Each list has a `prefix` (2-10 uppercase letters, e.g. `SPR`, `SEO`) and an auto
 - `order` — active top-level item IDs, in display order. This is the source of truth for `view` and `list`.
 - `archived` — archived top-level item IDs. These are absent from `order` and hidden from `view` and `list` counts.
 
-Subtasks live in the same `tasks` map with `type: "subtask"` and a `parent` reference; they are discovered by scanning for their parent and are not listed in `order` or `archived`. Cross-file references map a foreign prefix to an external todo file so a task ID from another file can be resolved.
+Every item has a semantic kind in `type` — `task` is the implicit default when the field is absent, or a free-form lowercase kind like `goal`, `bug`, or `feature`. Subtasks live in the same `tasks` map with a `parent` reference; subtask-ness comes from `parent`, not from `type`, so a subtask can carry any kind. Without an explicit kind, a subtask keeps the legacy `type: "subtask"` marker on disk for backward compatibility; either way, it is discovered by scanning for its parent and is not listed in `order` or `archived`. A top-level task can also carry a `goal` field linking it to a goal item (an item whose kind is `goal`) anywhere in the file. Cross-file references map a foreign prefix to an external todo file so a task ID from another file can be resolved.
 
 ```json
 {
@@ -48,6 +48,19 @@ Subtasks live in the same `tasks` map with `type: "subtask"` and a `parent` refe
         "text": "Verify URLs",
         "type": "subtask",
         "parent": "SPR-001",
+        "completed": false,
+        "status": "open"
+      },
+      "SPR-003": {
+        "text": "Ship v2",
+        "type": "goal",
+        "completed": false,
+        "status": "open"
+      },
+      "SPR-004": {
+        "text": "Fix checkout crash",
+        "type": "bug",
+        "goal": "SPR-003",
         "completed": false,
         "status": "open"
       }
@@ -102,6 +115,9 @@ Every task and subtask has a `status` field with three values:
 | `archive offload` | Move archived items into a separate archive file to shrink the ledger |
 | `merge` | Combine multiple todo files into one (schema-aware) |
 | `reference` | Add a cross-file reference for foreign prefixes |
+| `goals` | List goal items with rolled-up linked-task progress |
+| `link` | Link a top-level task to a goal |
+| `unlink` | Remove a task's link to its goal |
 
 ### List all todo lists
 
@@ -167,9 +183,18 @@ aux4 todo add "sprint-1" --item "SEO audit" --assignee "Sophia"
 
 ### Remove an item
 
+If the item has subtasks (even subtasks living in a different list in the same file), `remove` refuses and names the count — pass `--cascade true` to remove the item and all its subtasks. Removing a goal unlinks every task that pointed at it (and reports how many).
+
 ```bash
 aux4 todo remove "sprint-1" --id SPR-001
+aux4 todo remove "sprint-1" --id SPR-001 --cascade true   # item has subtasks
 ```
+
+```text
+Item 'SPR-001' has 2 subtasks. Use --cascade true to remove it and all its subtasks.
+```
+
+**Breaking change (1.5.0):** earlier versions removed a parent's subtasks silently. `remove` now fails on a parent with subtasks unless `--cascade true` is passed.
 
 ### Mark an item complete or incomplete
 
@@ -213,12 +238,53 @@ aux4 todo describe "sprint-1" --id SPR-001 --description "Import the next 5 IKEA
 
 ### Subtasks
 
-Add a subtask to an item, then view all subtasks of that item. Subtasks of subtasks are not allowed.
+Add a subtask to an item, then view all subtasks of that item. Subtasks of subtasks are not allowed, and a subtask can never be given `--type goal`.
 
 ```bash
 aux4 todo subtask "sprint-1" --id SPR-001 --item "Verify KALLAX URL" --assignee "Alex"
 aux4 todo subtasks "sprint-1" --id SPR-001
 ```
+
+Subtask-ness comes from the parent reference, not from `type` — pass `--type` to give a subtask a real kind (e.g. `bug`) while it's still correctly nested and counted under its parent:
+
+```bash
+aux4 todo subtask "sprint-1" --id SPR-001 --item "Fix regression" --type bug
+```
+
+### Item kind
+
+Every item carries a semantic kind — `--type` on `new`, `add`, or `subtask` (free-form lowercase text such as `goal`, `bug`, `feature`). `task` is the implicit default when `--type` is omitted, and `view`/`show` only display a `[kind]` tag when the kind isn't `task` — a plain task's output is unchanged.
+
+```bash
+aux4 todo add "sprint-1" --item "Fix checkout crash" --type bug
+aux4 todo view "sprint-1" --type bug   # filter to a single kind
+```
+
+```text
+## sprint-1 [SPR]
+  SPR-004: [ ] [bug] Fix checkout crash
+```
+
+### Goals
+
+A top-level task can link to a goal item (an item whose kind is `goal`) to roll its progress up into that goal. The goal can live in any list in the same file — linking resolves it by id, so goals work across streams.
+
+```bash
+aux4 todo new "sprint-1" --prefix SPR --item "Ship v2" --type goal
+aux4 todo add "sprint-1" --item "Fix checkout crash" --goal SPR-001      # link at creation
+aux4 todo link "backlog" --id BKL-003 --goal SPR-001                    # or link an existing task
+aux4 todo unlink "backlog" --id BKL-003                                 # remove the link
+aux4 todo goals                                                         # rolled-up progress
+```
+
+```text
+Goals:
+  SPR-001: [ ] Ship v2 [sprint-1] (3/5)
+```
+
+Progress counts each linked task and, for any linked task that has subtasks, its subtasks too — `(3/5)` means 3 of 5 total units are done. A goal whose linked tasks are all done is flagged with `— all linked tasks done`; completing the goal item itself is always manual, `goals` never does it for you. A subtask cannot be linked directly — link its parent instead.
+
+An archived goal is hidden from `goals`, but an archived linked task still counts toward its (non-archived) goal's progress. Removing a goal (`aux4 todo remove`) clears the `goal` field on every task that pointed at it and reports how many tasks were unlinked.
 
 ### Comments
 

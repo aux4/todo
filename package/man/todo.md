@@ -26,10 +26,13 @@ aux4 todo <command>
 | `comment` | Add a comment to a todo item |
 | `comments` | View comments on a todo item |
 | `reference` | Add a cross-file reference for foreign prefixes |
+| `goals` | List goal items with rolled-up linked-task progress |
+| `link` | Link a task to a goal |
+| `unlink` | Remove a task's link to its goal |
 
 ## Data Model
 
-Each list has a prefix (e.g. `SPR`, `SEO`) and a counter. Task IDs are `PREFIX-NNN` (auto-incrementing). Subtasks live in the same list with `type: "subtask"` and a `parent` reference. Cross-file references map foreign prefixes to external todo files.
+Each list has a prefix (e.g. `SPR`, `SEO`) and a counter. Task IDs are `PREFIX-NNN` (auto-incrementing). Every item has a semantic kind (`type`) — `task` is the implicit default when absent, or a free-form kind like `goal`/`bug`/`feature`. Subtasks live in the same list with a `parent` reference (subtask-ness comes from `parent`, not `type`); the default, untyped subtask keeps a legacy `type: "subtask"` marker on disk. A top-level task can carry a `goal` field linking it to a goal item (any list, resolved by id) — see `aux4 todo goals`/`link`/`unlink`. Cross-file references map foreign prefixes to external todo files.
 
 ```json
 {

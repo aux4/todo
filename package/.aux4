@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "todo",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Todo list manager for aux4",
   "license": "Apache-2.0",
   "tags": [
@@ -59,7 +59,7 @@
         {
           "name": "view",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js view values(file, name, status) --format ${format}"
+            "node ${packageDir}/lib/aux4-todo.js view values(file, name, status, type, goal) --format ${format}"
           ],
           "help": {
             "text": "View a slim one-line index of a todo list",
@@ -77,6 +77,16 @@
               {
                 "name": "status",
                 "text": "Filter by status: open, doing, done, or all (default: open+doing)",
+                "default": ""
+              },
+              {
+                "name": "type",
+                "text": "Filter by item kind (e.g. task, goal, bug, feature); empty shows all kinds",
+                "default": ""
+              },
+              {
+                "name": "goal",
+                "text": "Filter to tasks linked to this goal id",
                 "default": ""
               },
               {
@@ -130,7 +140,7 @@
         {
           "name": "new",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js add values(file, name, prefix, item, assignee, description)"
+            "node ${packageDir}/lib/aux4-todo.js add values(file, name, prefix, item, assignee, description, type)"
           ],
           "help": {
             "text": "Create a new todo list with a prefix and optional initial item",
@@ -163,6 +173,11 @@
                 "name": "description",
                 "text": "Long description (optional)",
                 "default": ""
+              },
+              {
+                "name": "type",
+                "text": "Item kind for the initial item (e.g. goal, bug, feature); default: task",
+                "default": ""
               }
             ]
           }
@@ -170,7 +185,7 @@
         {
           "name": "add",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js addItem values(file, name, item, assignee, description)"
+            "node ${packageDir}/lib/aux4-todo.js addItem values(file, name, item, assignee, description, type, goal)"
           ],
           "help": {
             "text": "Add a new item to an existing todo list",
@@ -198,6 +213,16 @@
                 "name": "description",
                 "text": "Long description (optional)",
                 "default": ""
+              },
+              {
+                "name": "type",
+                "text": "Item kind (e.g. goal, bug, feature); default: task",
+                "default": ""
+              },
+              {
+                "name": "goal",
+                "text": "Id of a goal item to link this task to",
+                "default": ""
               }
             ]
           }
@@ -205,7 +230,7 @@
         {
           "name": "remove",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js removeItem values(file, name, id)"
+            "node ${packageDir}/lib/aux4-todo.js removeItem values(file, name, id, cascade)"
           ],
           "help": {
             "text": "Remove an item from a todo list",
@@ -223,6 +248,11 @@
               {
                 "name": "id",
                 "text": "Item id (required)"
+              },
+              {
+                "name": "cascade",
+                "text": "Remove subtasks along with the item (required if the item has subtasks)",
+                "default": "false"
               }
             ]
           }
@@ -294,7 +324,7 @@
         {
           "name": "subtask",
           "execute": [
-            "node ${packageDir}/lib/aux4-todo.js subtask values(file, name, id, item, assignee, description)"
+            "node ${packageDir}/lib/aux4-todo.js subtask values(file, name, id, item, assignee, description, type)"
           ],
           "help": {
             "text": "Add a subtask to a todo item",
@@ -326,6 +356,11 @@
                 "name": "description",
                 "text": "Long description (optional)",
                 "default": ""
+              },
+              {
+                "name": "type",
+                "text": "Item kind (e.g. bug, feature); default: subtask (legacy marker, kept for compatibility)",
+                "default": ""
               }
             ]
           }
@@ -356,6 +391,81 @@
                 "name": "format",
                 "text": "Output format: text (default) or json",
                 "default": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "goals",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js goals values(file) --format ${format}"
+          ],
+          "help": {
+            "text": "List every goal item with rolled-up progress of its linked tasks (incl. subtasks)",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "format",
+                "text": "Output format: text (default) or json",
+                "default": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "link",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js link values(file, name, id, goal)"
+          ],
+          "help": {
+            "text": "Link a top-level task to a goal item",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Task id to link (required)"
+              },
+              {
+                "name": "goal",
+                "text": "Id of the goal item to link to (required)"
+              }
+            ]
+          }
+        },
+        {
+          "name": "unlink",
+          "execute": [
+            "node ${packageDir}/lib/aux4-todo.js unlink values(file, name, id)"
+          ],
+          "help": {
+            "text": "Remove a task's link to its goal",
+            "variables": [
+              {
+                "name": "file",
+                "text": "Todo file path",
+                "default": ".todo.json"
+              },
+              {
+                "name": "name",
+                "text": "Todo list name (required)",
+                "arg": true
+              },
+              {
+                "name": "id",
+                "text": "Task id to unlink (required)"
               }
             ]
           }
